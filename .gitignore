@@ -6,6 +6,7 @@ debug/
 release/
 dist/
 publish.sh
+.goreleaser.yaml
 
 .vscode/*
 !.vscode/extensions.json

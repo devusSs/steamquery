@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -46,10 +46,10 @@ func pingSteamOnline() error {
 		log.Println("Detected you are running Linux. Please make sure to enable following setting:")
 		ex, err := os.Executable()
 		if err != nil {
-			panic(err)
+			return err
 		}
-		exPath := filepath.Dir(ex)
-		log.Printf("setcap cap_net_raw=+ep %s\n", exPath)
+
+		log.Printf("setcap cap_net_raw=+ep %s\n", ex)
 
 		fmt.Printf("Did you enter that command (y/n)? ")
 
@@ -60,7 +60,7 @@ func pingSteamOnline() error {
 			return err
 		}
 
-		if userInput != "y" {
+		if strings.TrimSpace(strings.ReplaceAll(userInput, "\n", "")) != "y" {
 			return errors.New("cannot use this tool without setting that command")
 		}
 	}
