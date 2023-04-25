@@ -1,4 +1,5 @@
-run:
+dev:
+	@rm -rf debug/
 	@go mod tidy
 	@go build -o debug/steamquery .
 	@./debug/steamquery

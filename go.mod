@@ -3,7 +3,7 @@ module github.com/devusSs/steamquery
 go 1.20
 
 require (
-	github.com/go-ping/ping v1.1.0
+	github.com/prometheus-community/pro-bing v0.1.0
 	google.golang.org/api v0.118.0
 )
 

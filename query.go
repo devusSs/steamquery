@@ -82,18 +82,15 @@ func main() {
 func runQuery(cfg *config, svc *spreadsheetService) {
 	callClear()
 
-	// Skip ping for non-supported OS.
-	if determineOS() == "darwin" || determineOS() == "linux" {
-		if err := pingSteamOnline(); err != nil {
-			log.Println("[WARN] There might be an issue with your network or Steam might be down: ", err.Error())
-			log.Println("[INFO] Rerunning query in 30 mins...")
+	if err := pingSteamOnline(); err != nil {
+		log.Println("[WARN] There might be an issue with your network or Steam might be down: ", err.Error())
+		log.Println("[INFO] Rerunning query in 30 mins...")
 
-			time.AfterFunc(30*time.Minute, func() {
-				runQuery(cfg, svc)
-			})
+		time.AfterFunc(30*time.Minute, func() {
+			runQuery(cfg, svc)
+		})
 
-			return
-		}
+		return
 	}
 
 	pstTime, err := timeIn(time.Now(), "America/Los_Angeles")

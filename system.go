@@ -5,10 +5,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
+	"time"
 
-	"github.com/go-ping/ping"
+	probing "github.com/prometheus-community/pro-bing"
 )
 
 const (
@@ -24,12 +24,14 @@ func listenForCTRLC() {
 	fmt.Println("")
 }
 
-// Checks if Steam is reachable.
+// Checks if Steamcommunity is reachable.
 func pingSteamOnline() error {
-	pinger, err := ping.NewPinger(communityURL)
+	pinger, err := probing.NewPinger(communityURL)
 	if err != nil {
 		return err
 	}
+
+	pinger.Timeout = 3 * time.Second
 
 	pinger.Count = 3
 
@@ -41,13 +43,11 @@ func pingSteamOnline() error {
 	stats := pinger.Statistics()
 
 	if stats.AvgRtt.Milliseconds() > 500 {
-		log.Printf("[WARN] Average RTT to %s: %d ms\n", communityURL, stats.AvgRtt.Milliseconds())
-		log.Printf("[WARN] Calls to %s may be delayed\n", communityURL)
+		log.Printf("[WARN] RTT to %s exceeds 500 ms (measured: %d ms)\n", communityURL, stats.AvgRtt.Milliseconds())
+		log.Printf("[WARN] Calls to %s may therefor be delayed\n", communityURL)
+	} else {
+		log.Printf("[INFO] Ping to %s succeeded, measured %d ms\n", communityURL, stats.AvgRtt.Milliseconds())
 	}
 
 	return nil
-}
-
-func determineOS() string {
-	return runtime.GOOS
 }
