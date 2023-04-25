@@ -82,6 +82,23 @@ func main() {
 func runQuery(cfg *config, svc *spreadsheetService) {
 	callClear()
 
+	steamUp, err := isSteamCSGOAPIUp(cfg)
+	if err != nil {
+		log.Println("Querying Steam API failed: ", err.Error())
+		return
+	}
+
+	if !steamUp {
+		log.Println("[WARN] Steam might be down or delayed")
+		log.Println("[INFO] Rerunning query in 30 mins...")
+
+		time.AfterFunc(30*time.Minute, func() {
+			runQuery(cfg, svc)
+		})
+
+		return
+	}
+
 	if err := pingSteamOnline(); err != nil {
 		log.Println("[WARN] There might be an issue with your network or Steam might be down: ", err.Error())
 		log.Println("[INFO] Rerunning query in 30 mins...")

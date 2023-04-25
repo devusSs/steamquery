@@ -13,6 +13,7 @@ type config struct {
 	ErrorCell       string              `json:"error_cell"`
 	SpreadSheetID   string              `json:"spreadsheet_id"`
 	UpdateInterval  int                 `json:"update_interval"`
+	SteamAPIKey     string              `json:"steam_api_key"`
 }
 
 func loadConfig(fileName string) (*config, error) {
@@ -53,6 +54,10 @@ func (c *config) checkConfig() error {
 
 	if c.UpdateInterval == 0 {
 		return errors.New("missing update interval in config")
+	}
+
+	if c.SteamAPIKey == "" {
+		return errors.New("missing steam api key in config")
 	}
 
 	return nil

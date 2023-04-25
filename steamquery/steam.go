@@ -1,9 +1,16 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"time"
 
 	_ "time/tzdata"
+)
+
+const (
+	statusAPIURL = "https://api.steampowered.com/ICSGOServers_730/GetGameServersStatus/v1/?key="
 )
 
 func inTimeSpan(start, end, check time.Time) bool {
@@ -37,13 +44,30 @@ func checkForSteamUsualDowntime(currentTime time.Time) (bool, error) {
 	}
 
 	// Steam downtime start in PST
-	usualDowntimeStart := time.Date(2023, 04, 20, 13, 0, 0, 0, valveTime)
+	usualDowntimeStart := time.Date(2023, 04, 20, 14, 0, 0, 0, valveTime)
 	// Steam downtime end in PST
-	usualDowntimeEnd := time.Date(2023, 04, 20, 15, 0, 0, 0, valveTime)
+	usualDowntimeEnd := time.Date(2023, 04, 20, 16, 0, 0, 0, valveTime)
 
 	if !inTimeSpan(usualDowntimeStart, usualDowntimeEnd, currentTime) {
 		return false, nil
 	}
 
 	return true, nil
+}
+
+// Actual check on the Steam API for status of CSGO servers.
+func isSteamCSGOAPIUp(cfg *config) (bool, error) {
+	res, err := http.Get(fmt.Sprintf("%s%s", statusAPIURL, cfg.SteamAPIKey))
+	if err != nil {
+		return false, err
+	}
+	defer res.Body.Close()
+
+	var resp steamAPIResponse
+
+	if err := json.NewDecoder(res.Body).Decode(&resp); err != nil {
+		return false, err
+	}
+
+	return resp.Result.Services.SessionsLogon == "normal" && resp.Result.Services.SteamCommunity == "normal", nil
 }

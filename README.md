@@ -37,6 +37,10 @@ If you need help doing that please refrain from sending me an E-Mail or opening 
 
 <br/>
 
+Go to your [Steam dev settings](https://steamcommunity.com/dev/apikey) and generate an API key. It will be needed to query the status of the Steam API / Sessions Managers / Community Status of CSGO.
+
+<br/>
+
 Then create a `config.json` file a directory of your choice. Using the [files](files/) directory in the projects directory is recommended however while naming the config `config.json`.
 <br/>
 Use the [example config file](files/config.example.json) to create your own `config.json` file:
@@ -51,7 +55,8 @@ Use the [example config file](files/config.example.json) to create your own `con
   "last_updated_cell": "table_cell_to_show_last_update_on_google_sheet",
   "error_cell": "table_cell_to_show_potential_errors_on_google_sheet",
   "spreadsheet_id": "id_of_your_google_sheet_(get_from_link)",
-  "update_interval": "integer_value_in_hour"
+  "update_interval": "integer_value_in_hour",
+  "steam_api_key": "steam_api_key"
 }
 ```
 
