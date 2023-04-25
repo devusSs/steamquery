@@ -32,6 +32,12 @@ func main() {
 	gCloudPath := flag.String("g", "./files/gcloud.json", "sets the google cloud config path")
 	flag.Parse()
 
+	// Check for updates.
+	if err := doSelfUpdate(); err != nil {
+		log.Println("Error updating app: ", err.Error())
+		return
+	}
+
 	cfg, err := loadConfig(*cfgPath)
 	if err != nil {
 		log.Println("Error loading config: ", err.Error())
