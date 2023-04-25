@@ -2,6 +2,8 @@ package main
 
 import (
 	"time"
+
+	_ "time/tzdata"
 )
 
 func inTimeSpan(start, end, check time.Time) bool {
