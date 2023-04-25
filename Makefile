@@ -1,23 +1,14 @@
 dev:
-	@rm -rf debug/
 	@go mod tidy
-	@go build -o debug/steamquery .
-	@./debug/steamquery
-
-pub:
-	@echo "Building app for Windows (AMD64), Linux (AMD64) & MacOS (ARM64)..."
-	@go mod tidy
-	@GOOS=windows GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o release/steamquery_win_amd64.exe .
-	@GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o release/steamquery_lin_amd64 .
-	@GOOS=darwin GOARCH=arm64 go build -trimpath -ldflags="-s -w" -o release/steamquery_mac_arm64 .
-	@echo "Done building app"
+	@go build -o debug/steamquery_dev/ ./...
+	@./debug/steamquery_dev/steamquery
 
 build:
 	@echo "Building app for Windows (AMD64), Linux (AMD64) & MacOS (ARM64)..."
 	@go mod tidy
-	@GOOS=windows GOARCH=amd64 go build -o release/steamquery_win_amd64.exe .
-	@GOOS=linux GOARCH=amd64 go build -o release/steamquery_lin_amd64 .
-	@GOOS=darwin GOARCH=arm64 go build -o release/steamquery_mac_arm64 .
+	@GOOS=windows GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o release/steamquery_win_amd64/ ./...
+	@GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o release/steamquery_lin_amd64/ ./...
+	@GOOS=darwin GOARCH=arm64 go build -trimpath -ldflags="-s -w" -o release/steamquery_mac_arm64/ ./...
 	@echo "Done building app"
 
 clean:
