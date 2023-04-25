@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -29,6 +33,36 @@ func pingSteamOnline() error {
 	pinger, err := probing.NewPinger(communityURL)
 	if err != nil {
 		return err
+	}
+
+	// Elevate ping so the program does not crash.
+	if runtime.GOOS == "windows" {
+		pinger.SetPrivileged(true)
+	}
+
+	// Elevate ping and instruct user to set elevation via ssh / shell.
+	if runtime.GOOS == "linux" {
+		pinger.SetPrivileged(true)
+		log.Println("Detected you are running Linux. Please make sure to enable following setting:")
+		ex, err := os.Executable()
+		if err != nil {
+			panic(err)
+		}
+		exPath := filepath.Dir(ex)
+		log.Printf("setcap cap_net_raw=+ep %s\n", exPath)
+
+		fmt.Printf("Did you enter that command (y/n)? ")
+
+		inputReader := bufio.NewReader(os.Stdin)
+
+		userInput, err := inputReader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+
+		if userInput != "y" {
+			return errors.New("cannot use this tool without setting that command")
+		}
 	}
 
 	pinger.Timeout = 3 * time.Second
