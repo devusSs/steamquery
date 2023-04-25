@@ -2,8 +2,6 @@
 
 ## Disclaimer
 
----
-
 DO NOT (!) USE THIS PROGRAM WITHOUT KNOWING WHAT IT DOES OR GETTING LECTURED BY THE CREATOR (devusSs).
 
 This program is not affiliated with any services mentioned inside or outside of it.
@@ -13,8 +11,6 @@ This program may also not be safe for production use.
 Please contact the owner (devusSs) at devuscs@gmail.com to resolve any issues (especially trademarks and copyright stuff).
 
 ## Setup
-
----
 
 Create a new raw [Google Sheet](https://docs.google.com/) and set it up like so (must not exactly match):
 ![sheets.jpg](./docs/googlesheet.png)
@@ -65,8 +61,6 @@ Use the [example config file](files/config.example.json) to create your own `con
 
 ## Building and running the app
 
----
-
 Either download an already compiled program from the [releases](https://github.com/devusSs/steamquery/releases) section or clone the repository and run either
 
 ```sh
@@ -89,8 +83,6 @@ Successful output should look like this:
 Errors will usually be self-explainatory. Any weird errors may require the use of [Google](https://google.com) or [creating an issue](https://github.com/devusSs/steamquery/issues) on Github.
 
 ## Further features (soonTM)
-
----
 
 - automatically query items from Steam inventories
 - use Steam's API to query server status
