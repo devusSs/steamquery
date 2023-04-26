@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"runtime"
@@ -21,7 +20,7 @@ const (
 
 // Blocks current scope until CTRL+C is hit.
 func listenForCTRLC() {
-	log.Println("[INFO] Press CTRL+C to cancel any time...")
+	writeInfo("Press CTRL+C to cancel any time...")
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 	<-done
@@ -43,13 +42,13 @@ func pingSteamOnline() error {
 	// Elevate ping and instruct user to set elevation via ssh / shell.
 	if runtime.GOOS == "linux" {
 		pinger.SetPrivileged(true)
-		log.Println("Detected you are running Linux. Please make sure to enable following setting:")
+		writeWarning("Detected you are running Linux. Please make sure to enable following setting:")
 		ex, err := os.Executable()
 		if err != nil {
 			return err
 		}
 
-		log.Printf("setcap cap_net_raw=+ep %s\n", ex)
+		writeWarning(fmt.Sprintf("setcap cap_net_raw=+ep %s", ex))
 
 		fmt.Printf("Did you enter that command (y/n)? ")
 
@@ -77,10 +76,10 @@ func pingSteamOnline() error {
 	stats := pinger.Statistics()
 
 	if stats.AvgRtt.Milliseconds() > 500 {
-		log.Printf("[WARN] RTT to %s exceeds 500 ms (measured: %d ms)\n", communityURL, stats.AvgRtt.Milliseconds())
-		log.Printf("[WARN] Calls to %s may therefor be delayed\n", communityURL)
+		writeWarning(fmt.Sprintf("RTT to %s exceeds 500 ms (measured: %d ms)", communityURL, stats.AvgRtt.Milliseconds()))
+		writeWarning(fmt.Sprintf("Calls to %s may therefor be delayed", communityURL))
 	} else {
-		log.Printf("[INFO] Ping to %s succeeded, measured %d ms\n", communityURL, stats.AvgRtt.Milliseconds())
+		writeInfo(fmt.Sprintf("Ping to %s succeeded, measured %d ms", communityURL, stats.AvgRtt.Milliseconds()))
 	}
 
 	return nil

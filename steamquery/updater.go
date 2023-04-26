@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/blang/semver"
 	"github.com/rhysd/go-github-selfupdate/selfupdate"
@@ -15,7 +15,7 @@ const (
 )
 
 func doSelfUpdate() error {
-	log.Println("[INFO] Checking for updates...")
+	writeInfo("Checking for updates...")
 
 	v := semver.MustParse(version)
 	latest, err := selfupdate.UpdateSelf(v, repoURL)
@@ -24,9 +24,9 @@ func doSelfUpdate() error {
 	}
 
 	if latest.Version.Equals(v) {
-		log.Printf("[INFO] App is up to date")
+		writeSuccess("App is up to date")
 	} else {
-		log.Printf("[SUCCESS] Successfully updated app to version %s\n", latest.Version.String())
+		writeSuccess(fmt.Sprintf("Successfully updated app to version %s", latest.Version.String()))
 	}
 
 	return nil

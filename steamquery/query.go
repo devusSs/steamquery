@@ -31,29 +31,36 @@ func main() {
 	cfgPath := flag.String("c", "./files/config.json", "sets the config path")
 	gCloudPath := flag.String("g", "./files/gcloud.json", "sets the google cloud config path")
 	ignoreChecks := flag.Bool("ic", false, "[DEV] ignores checks (update, config, sheets conn, steam conn)")
+	logDir := flag.String("l", "./logs", "sets the log directory (exl. log file name)")
 	flag.Parse()
 
+	if err := createLogFile(*logDir); err != nil {
+		log.Printf("[%s] Creating log file failed: %s\n", errSign, err.Error())
+		log.Printf("[%s] Please make sure the specified directory \"%s\" exists\n", errSign, *logDir)
+		return
+	}
+
 	if *ignoreChecks {
-		log.Println("[WARN] Using dev mode and ignoring checks, NOT RECOMMENDED")
+		writeWarning("Using dev mode and ignoring checks, NOT RECOMMENDED")
 	}
 
 	// Check for updates.
 	if !*ignoreChecks {
 		if err := doSelfUpdate(); err != nil {
-			log.Println("Error updating app: ", err.Error())
+			writeError(fmt.Sprintf("Error updating app: %s", err.Error()))
 			return
 		}
 	}
 
 	cfg, err := loadConfig(*cfgPath)
 	if err != nil {
-		log.Println("Error loading config: ", err.Error())
+		writeError(fmt.Sprintf("Error loading config: %s", err.Error()))
 		return
 	}
 
 	if !*ignoreChecks {
 		if err := cfg.checkConfig(); err != nil {
-			log.Println("Error checking config: ", err.Error())
+			writeError(fmt.Sprintf("Error checking config: %s", err.Error()))
 			return
 		}
 	}
@@ -62,13 +69,13 @@ func main() {
 
 	svc, err := newSpreadsheetService(*gCloudPath)
 	if err != nil {
-		log.Println("Error creating spreadsheet service: ", err.Error())
+		writeError(fmt.Sprintf("Error creating spreadsheet service: %s", err.Error()))
 		return
 	}
 
 	if !*ignoreChecks {
 		if err := svc.testConnection(); err != nil {
-			log.Println("Error getting spreadsheet test info: ", err.Error())
+			writeError(fmt.Sprintf("Error getting spreadsheet test info: %s", err.Error()))
 		}
 	}
 
@@ -93,7 +100,14 @@ func main() {
 
 	listenForCTRLC()
 
-	log.Println("[EXIT] Program exit since runQuery() has not been called again")
+	writeInfo("Cleaning up, please wait...")
+
+	if err := logFile.Close(); err != nil {
+		log.Printf("[%s] Error closing log file: %s\n", errSign, err.Error())
+		return
+	}
+
+	log.Printf("[%s] Done cleaning up, exiting...\n", sucSign)
 }
 
 func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
@@ -102,13 +116,13 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	if !ignoreChecks {
 		steamUp, err := isSteamCSGOAPIUp(cfg)
 		if err != nil {
-			log.Println("Querying Steam API failed: ", err.Error())
+			writeError(fmt.Sprintf("Querying Steam API failed: %s", err.Error()))
 			return
 		}
 
 		if !steamUp {
-			log.Println("[WARN] Steam might be down or delayed")
-			log.Println("[INFO] Rerunning query in 30 mins...")
+			writeWarning("Steam might be down or delayed")
+			writeInfo("Rerunning query in 30 mins...")
 
 			time.AfterFunc(30*time.Minute, func() {
 				runQuery(cfg, svc, ignoreChecks)
@@ -118,8 +132,8 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 		}
 
 		if err := pingSteamOnline(); err != nil {
-			log.Println("[WARN] There might be an issue with your network or Steam might be down: ", err.Error())
-			log.Println("[INFO] Rerunning query in 30 mins...")
+			writeError(fmt.Sprintf("There might be an issue with your network or Steam might be down: %s", err.Error()))
+			writeInfo("Rerunning query in 30 mins...")
 
 			time.AfterFunc(30*time.Minute, func() {
 				runQuery(cfg, svc, ignoreChecks)
@@ -130,18 +144,18 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 
 		pstTime, err := timeIn(time.Now(), "America/Los_Angeles")
 		if err != nil {
-			log.Println("Error loading timezone: ", err.Error())
+			writeError(fmt.Sprintf("Error loading timezone: %s", err.Error()))
 			return
 		}
 
 		steamDown, err := checkForSteamUsualDowntime(pstTime)
 		if err != nil {
-			log.Println("Error checking if Steam might be down: ", err.Error())
+			writeError(fmt.Sprintf("Error checking if Steam might be down: %s", err.Error()))
 			return
 		}
 
 		if steamDown {
-			log.Println("[WARN] Steam might have issues, trying to query again in 30 mins...")
+			writeWarning("Steam might have issues, trying to query again in 30 mins...")
 
 			time.AfterFunc(30*time.Minute, func() {
 				runQuery(cfg, svc, ignoreChecks)
@@ -151,12 +165,11 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 		}
 	}
 
-	log.Println("[START] Running query...")
-
 	if lastUpdate.IsZero() {
-		log.Println("[INFO] Running query for 1st time...")
+		// TODO: keep track of times ran not via RAM
+		writeInfo("Running query for 1st time...")
 	} else {
-		log.Printf("[INFO] Last query run: %v\n", lastUpdate)
+		writeInfo(fmt.Sprintf("Last query run: %v", lastUpdate))
 	}
 
 	client := http.Client{}
@@ -171,14 +184,14 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 
 			req, err := http.NewRequest(http.MethodGet, baseURL+expNameEsc, nil)
 			if err != nil {
-				log.Println("Error on request: ", err.Error())
+				writeError(fmt.Sprintf("Error on request: %s", err.Error()))
 
 				var errorInterface []interface{}
 
 				errorInterface = append(errorInterface, err.Error())
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
-					log.Println("Error on updating error cell value: ", err.Error())
+					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
 					return
 				}
 
@@ -189,14 +202,14 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 
 			res, err := client.Do(req)
 			if err != nil {
-				log.Println("Error on response: ", err.Error())
+				writeError(fmt.Sprintf("Error on response: %s", err.Error()))
 
 				var errorInterface []interface{}
 
 				errorInterface = append(errorInterface, err.Error())
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
-					log.Println("Error on updating error cell value: ", err.Error())
+					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
 					return
 				}
 
@@ -205,14 +218,14 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 			defer res.Body.Close()
 
 			if res.StatusCode != 200 {
-				log.Println("Error on response: ", res.Status)
+				writeError(fmt.Sprintf("Error on response: %s", err.Error()))
 
 				var errorInterface []interface{}
 
 				errorInterface = append(errorInterface, fmt.Sprintf("Got unwanted status code on response: %d (reason: %s)", res.StatusCode, res.Status))
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
-					log.Println("Error on updating error cell value: ", err.Error())
+					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
 					return
 				}
 
@@ -221,14 +234,14 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 
 			body, err := io.ReadAll(res.Body)
 			if err != nil {
-				log.Println("Error converting response: ", err.Error())
+				writeError(fmt.Sprintf("Error converting response: %s", err.Error()))
 
 				var errorInterface []interface{}
 
 				errorInterface = append(errorInterface, err.Error())
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
-					log.Println("Error on updating error cell value: ", err.Error())
+					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
 					return
 				}
 
@@ -238,14 +251,14 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 			var resp responseBody
 
 			if err := json.Unmarshal(body, &resp); err != nil {
-				log.Println("Error on json response: ", err.Error())
+				writeError(fmt.Sprintf("Error on json response: %s", err.Error()))
 
 				var errorInterface []interface{}
 
 				errorInterface = append(errorInterface, err.Error())
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
-					log.Println("Error on updating error cell value: ", err.Error())
+					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
 					return
 				}
 
@@ -263,26 +276,26 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 			totalItems++
 
 			if err := updateEntryOnSheet(tableCell, priceInterface, svc); err != nil {
-				log.Println("Error on updating value on google sheet: ", err.Error())
+				writeError(fmt.Sprintf("Error on updating value on google sheet: %s", err.Error()))
 
 				var errorInterface []interface{}
 
 				errorInterface = append(errorInterface, err.Error())
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
-					log.Println("Error on updating error cell value: ", err.Error())
+					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
 					return
 				}
 
 				return
 			}
 
-			log.Printf("[SUCCESS] UPDATED ITEM: %s ; LOWEST PRICE: %s\n", itemName, lowestPrice)
+			writeSuccess(fmt.Sprintf("UPDATED ITEM: %s ; LOWEST PRICE: %s", itemName, lowestPrice))
 
 			// We gotta prevent spamming Steam or else we get a 429.
 			if itemsCounted == 20 {
 				itemsCounted = 0
-				log.Println("[INFO] Sleeping for 1 minute to prevent spam...")
+				writeInfo("Sleeping for 1 minute to prevent spam...")
 				time.Sleep(1 * time.Minute)
 			}
 		}
@@ -299,33 +312,33 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	lastUpdateInterface = append(lastUpdateInterface, fmt.Sprintf("%d.%d.%d - %d:%d", day, int(month), year, hour, minute))
 
 	if err := svc.writeSingleEntryToTable(cfg.LastUpdatedCell, lastUpdateInterface); err != nil {
-		log.Println("Error updating last updated cell: ", err.Error())
-		log.Println("[INFO] Rerunning Google sheets entry in 1 minute...")
+		writeError(fmt.Sprintf("Error updating last updated cell: %s", err.Error()))
+		writeInfo("Rerunning Google sheets entry in 1 minute...")
 
 		time.AfterFunc(1*time.Minute, func() {
 			if err := svc.writeSingleEntryToTable(cfg.LastUpdatedCell, lastUpdateInterface); err != nil {
-				log.Println("Error updating last updated cell on 2nd try: ", err.Error())
-				log.Println("[WARN] There might be something wrong with Google or your connection, exiting...")
+				writeError(fmt.Sprintf("Error updating last updated cell on 2nd try: %s", err.Error()))
+				writeWarning("There might be something wrong with Google or your connection, exiting...")
 				return
 			}
 		})
 	}
 
 	if totalItems != len(cfg.ItemList) {
-		log.Printf("Items counted vs items list in config mismatch: %d vs. %d\n", totalItems, len(cfg.ItemList))
+		writeWarning(fmt.Sprintf("Items counted vs items list in config mismatch: %d vs. %d", totalItems, len(cfg.ItemList)))
 
 		var errorInterface []interface{}
 
 		errorInterface = append(errorInterface, "Not all items have been updated.")
 
 		if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
-			log.Println("Error updating last updated cell: ", err.Error())
-			log.Println("[INFO] Rerunning Google sheets entry in 1 minute...")
+			writeError(fmt.Sprintf("Error updating error cell: %s", err.Error()))
+			writeInfo("Rerunning Google sheets entry in 1 minute...")
 
 			time.AfterFunc(1*time.Minute, func() {
 				if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
-					log.Println("Error updating error cell on 2nd try: ", err.Error())
-					log.Println("[WARN] There might be something wrong with Google or your connection, exiting...")
+					writeError(fmt.Sprintf("Error updating error cell on 2nd try: %s", err.Error()))
+					writeWarning("There might be something wrong with Google or your connection, exiting...")
 					return
 				}
 			})
@@ -338,20 +351,20 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	errorInterface = append(errorInterface, "No error(s) occured.")
 
 	if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
-		log.Println("Error updating error cell: ", err.Error())
-		log.Println("[INFO] Rerunning Google sheets entry in 1 minute...")
+		writeError(fmt.Sprintf("Error updating error cell: %s", err.Error()))
+		writeInfo("Rerunning Google sheets entry in 1 minute...")
 
 		time.AfterFunc(1*time.Minute, func() {
 			if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
-				log.Println("Error updating error cell on 2nd try: ", err.Error())
-				log.Println("[WARN] There might be something wrong with Google or your connection, exiting...")
+				writeError(fmt.Sprintf("Error updating error cell on 2nd try: %s", err.Error()))
+				writeWarning("There might be something wrong with Google or your connection, exiting...")
 				return
 			}
 		})
 	}
 
 	// Function calls itself again after 12 hours.
-	log.Printf("[DONE] Running query again in %d hours...\n", cfg.UpdateInterval)
+	writeSuccess(fmt.Sprintf("Done, rerunning query again in %d hours...", cfg.UpdateInterval))
 
 	lastUpdate = time.Now()
 
