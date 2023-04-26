@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type responseBody struct {
 	Success     bool   `json:"success"`
 	LowestPrice string `json:"lowest_price"`
@@ -144,4 +146,9 @@ type steamAPIResponse struct {
 			} `json:"purchase"`
 		} `json:"perfectworld"`
 	} `json:"result"`
+}
+
+type lastQueryRunFormat struct {
+	FirstRun time.Time `json:"first_run"`
+	LastRun  time.Time `json:"last_run"`
 }

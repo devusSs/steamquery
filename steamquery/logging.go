@@ -27,7 +27,7 @@ var (
 func writeInfo(message interface{}) {
 	log.Printf("[%s] %v\n", infSign, message)
 
-	_, err := logFile.WriteString(fmt.Sprintf("%v", message))
+	_, err := logFile.WriteString(fmt.Sprintf("%v\n", message))
 	if err != nil {
 		log.Printf("[%s] Error writing to log file: %s\n", errSign, err.Error())
 	}
@@ -36,7 +36,7 @@ func writeInfo(message interface{}) {
 func writeWarning(message interface{}) {
 	log.Printf("[%s] %v\n", warnSign, message)
 
-	_, err := logFile.WriteString(fmt.Sprintf("%v", message))
+	_, err := logFile.WriteString(fmt.Sprintf("%v\n", message))
 	if err != nil {
 		log.Printf("[%s] Error writing to log file: %s\n", errSign, err.Error())
 	}
@@ -45,7 +45,7 @@ func writeWarning(message interface{}) {
 func writeError(message interface{}) {
 	log.Printf("[%s] %v\n", errSign, message)
 
-	_, err := logFile.WriteString(fmt.Sprintf("%v", message))
+	_, err := logFile.WriteString(fmt.Sprintf("%v\n", message))
 	if err != nil {
 		log.Printf("[%s] Error writing to log file: %s\n", errSign, err.Error())
 	}
@@ -54,14 +54,14 @@ func writeError(message interface{}) {
 func writeSuccess(message interface{}) {
 	log.Printf("[%s] %v\n", sucSign, message)
 
-	_, err := logFile.WriteString(fmt.Sprintf("%v", message))
+	_, err := logFile.WriteString(fmt.Sprintf("%v\n", message))
 	if err != nil {
 		log.Printf("[%s] Error writing to log file: %s\n", errSign, err.Error())
 	}
 }
 
-func createLogFile(dir string) error {
-	logFileName := fmt.Sprintf("%s/steamquery_%d_%d_%d.log", dir, year, int(month), day)
+func createLogFile() error {
+	logFileName := fmt.Sprintf("%s/steamquery_%d_%d_%d.log", defaultLogPath, year, int(month), day)
 	f, err := os.OpenFile(logFileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		return err

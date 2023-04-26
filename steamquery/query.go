@@ -24,14 +24,14 @@ const (
 var (
 	clear map[string]func()
 
-	lastQueryRun time.Time
+	firstQueryRun time.Time
+	lastQueryRun  time.Time
 )
 
 func main() {
 	cfgPath := flag.String("c", "./files/config.json", "sets the config path")
 	gCloudPath := flag.String("g", "./files/gcloud.json", "sets the google cloud config path")
 	ignoreChecks := flag.Bool("ic", false, "[DEV] ignores checks (update, config, sheets conn, steam conn)")
-	logDir := flag.String("l", "./logs", "sets the log directory (exl. log file name)")
 	flag.Parse()
 
 	if err := createDefaultLogDirectory(); err != nil {
@@ -39,9 +39,13 @@ func main() {
 		return
 	}
 
-	if err := createLogFile(*logDir); err != nil {
+	if err := createLogFile(); err != nil {
 		log.Printf("[%s] Creating log file failed: %s\n", errSign, err.Error())
-		log.Printf("[%s] Please make sure the specified directory \"%s\" exists\n", errSign, *logDir)
+		return
+	}
+
+	if err := createLastQueryRunFile(); err != nil {
+		log.Printf("[%s] Creating query log file failed: %s\n", errSign, err.Error())
 		return
 	}
 
@@ -112,6 +116,11 @@ func main() {
 		return
 	}
 
+	if err := lastQueryRunFile.Close(); err != nil {
+		log.Printf("[%s] Error closing query log file: %s\n", errSign, err.Error())
+		return
+	}
+
 	log.Printf("[%s] Done cleaning up, exiting...\n", sucSign)
 }
 
@@ -143,13 +152,26 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 
 			return
 		}
-	}
 
-	if lastQueryRun.IsZero() {
-		// TODO: keep track of times ran not via RAM
-		writeInfo("Running query for 1st time...")
-	} else {
-		writeInfo(fmt.Sprintf("Last query run: %v", lastQueryRun))
+		jsonQuery, err := readFromQueryLogFile()
+		if err != nil {
+			writeError(fmt.Sprintf("Error reading last query log file: %s", err.Error()))
+			return
+		}
+
+		lastQueryRun = jsonQuery.LastRun
+		firstQueryRun = jsonQuery.FirstRun
+
+		if lastQueryRun.IsZero() {
+			writeInfo("Running query for 1st time...")
+		} else {
+			if time.Since(lastQueryRun) < 1*time.Minute {
+				writeWarning(fmt.Sprintf("Time since last query run: %.0f second(s)", time.Since(lastQueryRun).Seconds()))
+				writeWarning(fmt.Sprintf("Please manually run this app again in %.0f second(s)", time.Until(lastQueryRun.Add(1*time.Minute)).Seconds()))
+				return
+			}
+			writeInfo(fmt.Sprintf("Last query run: %v", lastQueryRun))
+		}
 	}
 
 	client := http.Client{}
@@ -346,7 +368,23 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	// Function calls itself again after 12 hours.
 	writeSuccess(fmt.Sprintf("Done, rerunning query again in %d hours...", cfg.UpdateInterval))
 
-	lastQueryRun = time.Now()
+	lastQueryData := lastQueryRunFormat{}
+	lastQueryData.LastRun = time.Now()
+
+	if firstQueryRun.IsZero() {
+		lastQueryData.FirstRun = time.Now()
+	}
+
+	jsonMarshal, err := json.Marshal(lastQueryData)
+	if err != nil {
+		writeError(fmt.Sprintf("Error marshaling to json: %s", err.Error()))
+		return
+	}
+
+	if err := writeToQueryLogFile(string(jsonMarshal)); err != nil {
+		writeError(fmt.Sprintf("Error writing to last query log file: %s", err.Error()))
+		return
+	}
 
 	time.AfterFunc(time.Duration(cfg.UpdateInterval)*time.Hour, func() {
 		runQuery(cfg, svc, ignoreChecks)
