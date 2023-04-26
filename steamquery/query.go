@@ -24,7 +24,7 @@ const (
 var (
 	clear map[string]func()
 
-	lastUpdate time.Time
+	lastQueryRun time.Time
 )
 
 func main() {
@@ -33,6 +33,11 @@ func main() {
 	ignoreChecks := flag.Bool("ic", false, "[DEV] ignores checks (update, config, sheets conn, steam conn)")
 	logDir := flag.String("l", "./logs", "sets the log directory (exl. log file name)")
 	flag.Parse()
+
+	if err := createDefaultLogDirectory(); err != nil {
+		log.Printf("[%s] Creating logs directory failed: %s\n", errSign, err.Error())
+		return
+	}
 
 	if err := createLogFile(*logDir); err != nil {
 		log.Printf("[%s] Creating log file failed: %s\n", errSign, err.Error())
@@ -110,7 +115,7 @@ func main() {
 	log.Printf("[%s] Done cleaning up, exiting...\n", sucSign)
 }
 
-// TODO: clean up code
+// TODO: clean up code => split into multiple functions
 func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	callClear()
 
@@ -140,11 +145,11 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 		}
 	}
 
-	if lastUpdate.IsZero() {
+	if lastQueryRun.IsZero() {
 		// TODO: keep track of times ran not via RAM
 		writeInfo("Running query for 1st time...")
 	} else {
-		writeInfo(fmt.Sprintf("Last query run: %v", lastUpdate))
+		writeInfo(fmt.Sprintf("Last query run: %v", lastQueryRun))
 	}
 
 	client := http.Client{}
@@ -341,7 +346,7 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	// Function calls itself again after 12 hours.
 	writeSuccess(fmt.Sprintf("Done, rerunning query again in %d hours...", cfg.UpdateInterval))
 
-	lastUpdate = time.Now()
+	lastQueryRun = time.Now()
 
 	time.AfterFunc(time.Duration(cfg.UpdateInterval)*time.Hour, func() {
 		runQuery(cfg, svc, ignoreChecks)

@@ -61,14 +61,7 @@ func writeSuccess(message interface{}) {
 }
 
 func createLogFile(dir string) error {
-	if dir == defaultLogPath {
-		err := createDefaultLogDirectory()
-		if err != nil {
-			return err
-		}
-	}
-
-	logFileName := fmt.Sprintf("%s/steamquery_%d_%d_%d.log", defaultLogPath, year, int(month), day)
+	logFileName := fmt.Sprintf("%s/steamquery_%d_%d_%d.log", dir, year, int(month), day)
 	f, err := os.OpenFile(logFileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
 		return err

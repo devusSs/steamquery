@@ -16,3 +16,4 @@ clean:
 	@rm -rf debug/
 	@rm -rf release/
 	@rm -rf dist/
+	@rm -rf logs/
