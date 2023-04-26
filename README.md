@@ -85,7 +85,7 @@ You can then run the app with either default flags or use the defined flags `-c`
 Successful output should look like this:
 ![output.jpg](./docs/exoutput.png)
 
-Errors will usually be self-explainatory. Any weird errors may require the use of [Google](https://google.com) or [creating an issue](https://github.com/devusSs/steamquery/issues) on Github.
+Errors will usually be self-explanatory. Any weird errors may require the use of [Google](https://google.com) or [creating an issue](https://github.com/devusSs/steamquery/issues) on Github.
 
 ## Further features (soonTM)
 
