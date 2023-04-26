@@ -30,12 +30,19 @@ var (
 func main() {
 	cfgPath := flag.String("c", "./files/config.json", "sets the config path")
 	gCloudPath := flag.String("g", "./files/gcloud.json", "sets the google cloud config path")
+	ignoreChecks := flag.Bool("ic", false, "[DEV] ignores checks (update, config, sheets conn, steam conn)")
 	flag.Parse()
 
+	if *ignoreChecks {
+		log.Println("[WARN] Using dev mode and ignoring checks, NOT RECOMMENDED")
+	}
+
 	// Check for updates.
-	if err := doSelfUpdate(); err != nil {
-		log.Println("Error updating app: ", err.Error())
-		return
+	if !*ignoreChecks {
+		if err := doSelfUpdate(); err != nil {
+			log.Println("Error updating app: ", err.Error())
+			return
+		}
 	}
 
 	cfg, err := loadConfig(*cfgPath)
@@ -44,9 +51,11 @@ func main() {
 		return
 	}
 
-	if err := cfg.checkConfig(); err != nil {
-		log.Println("Error checking config: ", err.Error())
-		return
+	if !*ignoreChecks {
+		if err := cfg.checkConfig(); err != nil {
+			log.Println("Error checking config: ", err.Error())
+			return
+		}
 	}
 
 	spreadsheetID = cfg.SpreadSheetID
@@ -57,8 +66,10 @@ func main() {
 		return
 	}
 
-	if err := svc.testConnection(); err != nil {
-		log.Println("Error getting spreadsheet test info: ", err.Error())
+	if !*ignoreChecks {
+		if err := svc.testConnection(); err != nil {
+			log.Println("Error getting spreadsheet test info: ", err.Error())
+		}
 	}
 
 	clear = make(map[string]func())
@@ -78,64 +89,66 @@ func main() {
 		cmd.Run()
 	}
 
-	runQuery(cfg, svc)
+	runQuery(cfg, svc, *ignoreChecks)
 
 	listenForCTRLC()
 
 	log.Println("[EXIT] Program exit since runQuery() has not been called again")
 }
 
-func runQuery(cfg *config, svc *spreadsheetService) {
+func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	callClear()
 
-	steamUp, err := isSteamCSGOAPIUp(cfg)
-	if err != nil {
-		log.Println("Querying Steam API failed: ", err.Error())
-		return
-	}
+	if !ignoreChecks {
+		steamUp, err := isSteamCSGOAPIUp(cfg)
+		if err != nil {
+			log.Println("Querying Steam API failed: ", err.Error())
+			return
+		}
 
-	if !steamUp {
-		log.Println("[WARN] Steam might be down or delayed")
-		log.Println("[INFO] Rerunning query in 30 mins...")
+		if !steamUp {
+			log.Println("[WARN] Steam might be down or delayed")
+			log.Println("[INFO] Rerunning query in 30 mins...")
 
-		time.AfterFunc(30*time.Minute, func() {
-			runQuery(cfg, svc)
-		})
+			time.AfterFunc(30*time.Minute, func() {
+				runQuery(cfg, svc, ignoreChecks)
+			})
 
-		return
-	}
+			return
+		}
 
-	if err := pingSteamOnline(); err != nil {
-		log.Println("[WARN] There might be an issue with your network or Steam might be down: ", err.Error())
-		log.Println("[INFO] Rerunning query in 30 mins...")
+		if err := pingSteamOnline(); err != nil {
+			log.Println("[WARN] There might be an issue with your network or Steam might be down: ", err.Error())
+			log.Println("[INFO] Rerunning query in 30 mins...")
 
-		time.AfterFunc(30*time.Minute, func() {
-			runQuery(cfg, svc)
-		})
+			time.AfterFunc(30*time.Minute, func() {
+				runQuery(cfg, svc, ignoreChecks)
+			})
 
-		return
-	}
+			return
+		}
 
-	pstTime, err := timeIn(time.Now(), "America/Los_Angeles")
-	if err != nil {
-		log.Println("Error loading timezone: ", err.Error())
-		return
-	}
+		pstTime, err := timeIn(time.Now(), "America/Los_Angeles")
+		if err != nil {
+			log.Println("Error loading timezone: ", err.Error())
+			return
+		}
 
-	steamDown, err := checkForSteamUsualDowntime(pstTime)
-	if err != nil {
-		log.Println("Error checking if Steam might be down: ", err.Error())
-		return
-	}
+		steamDown, err := checkForSteamUsualDowntime(pstTime)
+		if err != nil {
+			log.Println("Error checking if Steam might be down: ", err.Error())
+			return
+		}
 
-	if steamDown {
-		log.Println("[WARN] Steam might have issues, trying to query again in 30 mins...")
+		if steamDown {
+			log.Println("[WARN] Steam might have issues, trying to query again in 30 mins...")
 
-		time.AfterFunc(30*time.Minute, func() {
-			runQuery(cfg, svc)
-		})
+			time.AfterFunc(30*time.Minute, func() {
+				runQuery(cfg, svc, ignoreChecks)
+			})
 
-		return
+			return
+		}
 	}
 
 	log.Println("[START] Running query...")
@@ -343,7 +356,7 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 	lastUpdate = time.Now()
 
 	time.AfterFunc(time.Duration(cfg.UpdateInterval)*time.Hour, func() {
-		runQuery(cfg, svc)
+		runQuery(cfg, svc, ignoreChecks)
 	})
 }
 

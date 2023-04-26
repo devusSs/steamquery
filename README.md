@@ -6,7 +6,7 @@ DO NOT (!) USE THIS PROGRAM WITHOUT KNOWING WHAT IT DOES OR GETTING LECTURED BY 
 
 This program is not affiliated with any services mentioned inside or outside of it.
 
-This program may also not be safe for production use.
+This program may also not be safe for production use. It should be seen as a fun / site project by the developer.
 
 Please contact the owner (devusSs) at devuscs@gmail.com to resolve any issues (especially trademarks and copyright stuff).
 
@@ -90,5 +90,4 @@ Errors will usually be self-explainatory. Any weird errors may require the use o
 ## Further features (soonTM)
 
 - automatically query items from Steam inventories
-- use Steam's API to query server status
 - automatically query items from Google sheets to make use of config easier
