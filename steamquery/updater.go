@@ -15,9 +15,12 @@ const (
 )
 
 func doSelfUpdate() error {
+	writeInfo(fmt.Sprintf("Current version: %s\n", version))
+
 	writeInfo("Checking for updates...")
 
 	v := semver.MustParse(version)
+
 	latest, err := selfupdate.UpdateSelf(v, repoURL)
 	if err != nil {
 		return err

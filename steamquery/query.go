@@ -110,6 +110,7 @@ func main() {
 	log.Printf("[%s] Done cleaning up, exiting...\n", sucSign)
 }
 
+// TODO: clean up code
 func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	callClear()
 
@@ -117,45 +118,19 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 		steamUp, err := isSteamCSGOAPIUp(cfg)
 		if err != nil {
 			writeError(fmt.Sprintf("Querying Steam API failed: %s", err.Error()))
+
+			writeInfo("Rerunning query in 30 mins...")
+
+			time.AfterFunc(30*time.Minute, func() {
+				runQuery(cfg, svc, ignoreChecks)
+			})
+
 			return
 		}
 
 		if !steamUp {
 			writeWarning("Steam might be down or delayed")
 			writeInfo("Rerunning query in 30 mins...")
-
-			time.AfterFunc(30*time.Minute, func() {
-				runQuery(cfg, svc, ignoreChecks)
-			})
-
-			return
-		}
-
-		if err := pingSteamOnline(); err != nil {
-			writeError(fmt.Sprintf("There might be an issue with your network or Steam might be down: %s", err.Error()))
-			writeInfo("Rerunning query in 30 mins...")
-
-			time.AfterFunc(30*time.Minute, func() {
-				runQuery(cfg, svc, ignoreChecks)
-			})
-
-			return
-		}
-
-		pstTime, err := timeIn(time.Now(), "America/Los_Angeles")
-		if err != nil {
-			writeError(fmt.Sprintf("Error loading timezone: %s", err.Error()))
-			return
-		}
-
-		steamDown, err := checkForSteamUsualDowntime(pstTime)
-		if err != nil {
-			writeError(fmt.Sprintf("Error checking if Steam might be down: %s", err.Error()))
-			return
-		}
-
-		if steamDown {
-			writeWarning("Steam might have issues, trying to query again in 30 mins...")
 
 			time.AfterFunc(30*time.Minute, func() {
 				runQuery(cfg, svc, ignoreChecks)
