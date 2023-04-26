@@ -9,7 +9,7 @@ import (
 
 const (
 	// TODO: keep updating that version
-	version = "0.2.5"
+	version = "0.2.6"
 
 	repoURL = "devusSs/steamquery"
 )
