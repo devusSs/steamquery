@@ -396,7 +396,7 @@ func callClear() {
 	if ok {
 		value()
 	} else {
-		panic("Your platform is unsupported! I can't clear the terminal screen :(")
+		log.Fatalf("[%s] Unsupported platform\n", errSign)
 	}
 }
 
