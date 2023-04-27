@@ -60,13 +60,26 @@ func main() {
 			return
 		}
 
-		if err := handlePatchDownloadAndUnzip(updateURL); err != nil {
-			log.Printf("[%s] Error downloading or unzipping patch: %s\n", errSign, err.Error())
-			return
-		}
+		// Windows update files will be .zip.
+		if strings.Contains(updateURL, "Windows") {
+			if err := handlePatchDownloadAndUnzipWindows(updateURL); err != nil {
+				log.Printf("[%s] Error downloading or unzipping patch: %s\n", errSign, err.Error())
+				return
+			}
 
-		if err := os.RemoveAll("./tmp"); err != nil {
-			log.Printf("[%s] Error removing temp directory: %s\n", errSign, err.Error())
+			if err := os.RemoveAll("./tmp"); err != nil {
+				log.Printf("[%s] Error removing temp directory: %s\n", errSign, err.Error())
+			}
+			// Linux and MacOS update files will be .tar.gz.
+		} else {
+			if err := handlePatchDownloadAndUnzip(updateURL); err != nil {
+				log.Printf("[%s] Error downloading or unzipping patch: %s\n", errSign, err.Error())
+				return
+			}
+
+			if err := os.RemoveAll("./tmp"); err != nil {
+				log.Printf("[%s] Error removing temp directory: %s\n", errSign, err.Error())
+			}
 		}
 
 		log.Printf("[%s] Please rerun the app to use the latest version\n", infSign)
