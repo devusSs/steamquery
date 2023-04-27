@@ -66,19 +66,7 @@ Use the [example config file](files/config.example.json) to create your own `con
 
 ## Building and running the app
 
-Either download an already compiled program from the [releases](https://github.com/devusSs/steamquery/releases) section or clone the repository and run either
-
-```sh
-make build
-```
-
-or
-
-```sh
-make pub
-```
-
-depending on your use case.
+Either download an already compiled program from the [releases](https://github.com/devusSs/steamquery/releases) section or clone the repository and compile the program yourself. You will need the [Go(lang)](https://go.dev) binaries for that.
 
 You can then run the app with either default flags or use the defined flags `-c` and `-g` to set your config file path and your gcloud.json file path respectively.
 

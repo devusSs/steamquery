@@ -1,9 +1,3 @@
-dev:
-	@clear
-	@go mod tidy
-	@go build -o debug/steamquery_dev/ ./...
-	@./debug/steamquery_dev/steamquery
-
 build:
 	@echo "Building app for Windows (AMD64), Linux (AMD64) & MacOS (ARM64)..."
 	@go mod tidy
@@ -21,3 +15,11 @@ clean:
 	@rm -rf ./logs/
 	@rm -rf ./tmp/
 	@rm -rf ./testing/
+
+dev: build
+	@rm -rf ./testing/
+	@mkdir ./testing
+	@mkdir ./testing/files
+	@cp -R ./files ./testing
+	@cp ./release/steamquery_mac_arm64/steamquery ./testing
+	@cd ./testing && ./steamquery

@@ -8,6 +8,7 @@ dist/
 publish.sh
 tmp/
 testing/
+Makefile
 
 .vscode/*
 !.vscode/extensions.json
