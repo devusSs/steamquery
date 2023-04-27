@@ -7,6 +7,7 @@ release/
 dist/
 publish.sh
 tmp/
+testing/
 
 .vscode/*
 !.vscode/extensions.json
