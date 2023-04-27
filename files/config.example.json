@@ -7,6 +7,6 @@
   "last_updated_cell": "table_cell_to_show_last_update_on_google_sheet",
   "error_cell": "table_cell_to_show_potential_errors_on_google_sheet",
   "spreadsheet_id": "id_of_your_google_sheet_(get_from_link)",
-  "update_interval": "integer_value_in_hour",
+  "update_interval": 2,
   "steam_api_key": "steam_api_key"
 }
