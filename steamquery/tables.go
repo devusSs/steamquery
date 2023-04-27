@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"google.golang.org/api/option"
-	"google.golang.org/api/sheets/v4"
+	sheets "google.golang.org/api/sheets/v4"
 )
 
 var (
