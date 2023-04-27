@@ -1,4 +1,5 @@
 dev:
+	@clear
 	@go mod tidy
 	@go build -o debug/steamquery_dev/ ./...
 	@./debug/steamquery_dev/steamquery
@@ -12,6 +13,7 @@ build:
 	@echo "Done building app"
 
 clean:
+	@clear
 	@go mod tidy
 	@rm -rf debug/
 	@rm -rf release/
