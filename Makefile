@@ -20,3 +20,4 @@ clean:
 	@rm -rf ./dist/
 	@rm -rf ./logs/
 	@rm -rf ./tmp/
+	@rm -rf ./testing/
