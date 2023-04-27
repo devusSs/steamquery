@@ -15,7 +15,8 @@ build:
 clean:
 	@clear
 	@go mod tidy
-	@rm -rf debug/
-	@rm -rf release/
-	@rm -rf dist/
-	@rm -rf logs/
+	@rm -rf ./debug/
+	@rm -rf ./release/
+	@rm -rf ./dist/
+	@rm -rf ./logs/
+	@rm -rf ./tmp/
