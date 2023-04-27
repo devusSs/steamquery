@@ -21,7 +21,7 @@ import (
 
 const (
 	// TODO: keep updating that version
-	version = "0.2.7"
+	version = "0.2.8"
 
 	repoOwner = "devusSs"
 	repoName  = "steamquery"
