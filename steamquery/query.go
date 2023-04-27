@@ -34,6 +34,48 @@ func main() {
 	ignoreChecks := flag.Bool("ic", false, "[DEV] ignores checks (update, config, sheets conn, steam conn)")
 	flag.Parse()
 
+	log.Printf("[%s] Currently running app version %s\n", infSign, version)
+
+	// Check for updates.
+	log.Printf("[%s] Checking for updates...\n", infSign)
+
+	latestRelease, err := checkLatestReleaseGithub()
+	if err != nil {
+		log.Printf("[%s] Checking latest Github release failed: %s\n", errSign, err.Error())
+		return
+	}
+
+	isUpdated, err := checkVersionMatch(latestRelease)
+	if err != nil {
+		log.Printf("[%s] Checking latest release version failed: %s\n", errSign, err.Error())
+		return
+	}
+
+	if !isUpdated {
+		log.Printf("[%s] App is outdated, updating now...\n", warnSign)
+
+		updateURL, err := findMatchingOSAndPlatform(latestRelease)
+		if err != nil {
+			log.Printf("[%s] Error finding release files: %s\n", errSign, err.Error())
+			return
+		}
+
+		if err := handlePatchDownloadAndUnzip(updateURL); err != nil {
+			log.Printf("[%s] Error downloading or unzipping patch: %s\n", errSign, err.Error())
+			return
+		}
+
+		if err := os.RemoveAll("./tmp"); err != nil {
+			log.Printf("[%s] Error removing temp directory: %s\n", errSign, err.Error())
+		}
+
+		log.Printf("[%s] Please rerun the app to use the latest version\n", infSign)
+
+		return
+	} else {
+		log.Printf("[%s] App is already running newest version\n", sucSign)
+	}
+
 	if err := createDefaultLogDirectory(); err != nil {
 		log.Printf("[%s] Creating logs directory failed: %s\n", errSign, err.Error())
 		return
@@ -49,16 +91,10 @@ func main() {
 		return
 	}
 
+	// It is safe to use the WriteX methods from here.
+
 	if *ignoreChecks {
 		writeWarning("Using dev mode and ignoring checks, NOT RECOMMENDED")
-	}
-
-	// Check for updates.
-	if !*ignoreChecks {
-		if err := doSelfUpdate(); err != nil {
-			writeError(fmt.Sprintf("Error updating app: %s", err.Error()))
-			return
-		}
 	}
 
 	cfg, err := loadConfig(*cfgPath)
@@ -159,6 +195,7 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 			return
 		}
 
+		// TODO: debug if this works properly while writing to file
 		lastQueryRun = jsonQuery.LastRun
 		firstQueryRun = jsonQuery.FirstRun
 
