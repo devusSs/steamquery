@@ -8,6 +8,8 @@ dist/
 publish.sh
 tmp/
 testing/
+Makefile
+.goreleaser.yaml
 
 .vscode/*
 !.vscode/extensions.json
