@@ -141,17 +141,29 @@ func main() {
 	clear["linux"] = func() {
 		cmd := exec.Command("clear")
 		cmd.Stdout = os.Stdout
-		cmd.Run()
+		err := cmd.Run()
+		if err != nil {
+			writeError(fmt.Sprintf("Error running clear screen func: %s", err.Error()))
+			return
+		}
 	}
 	clear["darwin"] = func() {
 		cmd := exec.Command("clear")
 		cmd.Stdout = os.Stdout
-		cmd.Run()
+		err := cmd.Run()
+		if err != nil {
+			writeError(fmt.Sprintf("Error running clear screen func: %s", err.Error()))
+			return
+		}
 	}
 	clear["windows"] = func() {
 		cmd := exec.Command("cmd", "/c", "cls")
 		cmd.Stdout = os.Stdout
-		cmd.Run()
+		err := cmd.Run()
+		if err != nil {
+			writeError(fmt.Sprintf("Error running clear screen func: %s", err.Error()))
+			return
+		}
 	}
 
 	runQuery(cfg, svc, *ignoreChecks)

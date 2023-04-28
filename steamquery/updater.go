@@ -135,7 +135,9 @@ func handlePatchDownloadAndUnzip(url string) error {
 		path := filepath.Join(".", header.Name)
 		info := header.FileInfo()
 		if info.IsDir() {
-			os.MkdirAll(path, info.Mode())
+			if err := os.MkdirAll(path, info.Mode()); err != nil {
+				return err
+			}
 		} else {
 			outFile, err := os.Create(path)
 			if err != nil {
@@ -230,7 +232,9 @@ func handlePatchDownloadAndUnzipWindows(url string) error {
 
 	if runtime.GOOS == "windows" {
 		// On Windows, we need to close the current program before replacing its binary
-		exec.Command("taskkill", "/F", "/IM", filepath.Base(currentBinaryPath)).Run()
+		if err := exec.Command("taskkill", "/F", "/IM", filepath.Base(currentBinaryPath)).Run(); err != nil {
+			return err
+		}
 	}
 
 	err = os.Rename(binaryPath, currentBinaryPath)
