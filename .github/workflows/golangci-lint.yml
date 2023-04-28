@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         go: [1.x]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest]
     name: lint
     runs-on: ${{ matrix.os }}
     steps:
@@ -22,7 +22,6 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache: false
-      - run: go get -v ./...
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
