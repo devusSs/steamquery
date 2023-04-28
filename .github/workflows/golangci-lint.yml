@@ -24,7 +24,6 @@ jobs:
           cache: false
       - run: go clean -modcache -cache -i
       - run: go mod tidy
-      - run: go get -v ./...
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
