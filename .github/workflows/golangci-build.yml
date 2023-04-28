@@ -1,4 +1,4 @@
-name: golangci-lint
+name: golangci-build
 on:
   push:
     tags:
@@ -13,12 +13,12 @@ on:
 permissions:
   contents: read
 jobs:
-  golangci:
+  build:
+    name: build
     strategy:
       matrix:
         go: [1.20.3]
         os: [macos-latest, ubuntu-latest, windows-latest]
-    name: lint
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -29,8 +29,4 @@ jobs:
       - run: go clean -modcache -cache -i
       - run: go mod tidy
       - run: go get -v ./...
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: latest
-          skip-pkg-cache: true
+      - run: go build -v .
