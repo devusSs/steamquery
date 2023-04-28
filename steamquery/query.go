@@ -32,61 +32,68 @@ func main() {
 	cfgPath := flag.String("c", "./files/config.json", "sets the config path")
 	gCloudPath := flag.String("g", "./files/gcloud.json", "sets the google cloud config path")
 	ignoreChecks := flag.Bool("ic", false, "[DEV] ignores checks (update, config, sheets conn, steam conn)")
+	useBeta := flag.Bool("b", false, "opts into beta features")
 	flag.Parse()
+
+	if *ignoreChecks {
+		log.Printf("[%s] Ignoring checks, NOT RECOMMENDED!\n", warnSign)
+	}
 
 	log.Printf("[%s] Currently running app version %s\n", infSign, version)
 
 	// Check for updates.
-	log.Printf("[%s] Checking for updates...\n", infSign)
+	if !*ignoreChecks {
+		log.Printf("[%s] Checking for updates...\n", infSign)
 
-	latestRelease, err := checkLatestReleaseGithub()
-	if err != nil {
-		log.Printf("[%s] Checking latest Github release failed: %s\n", errSign, err.Error())
-		return
-	}
-
-	isUpdated, err := checkVersionMatch(latestRelease)
-	if err != nil {
-		log.Printf("[%s] Checking latest release version failed: %s\n", errSign, err.Error())
-		return
-	}
-
-	if !isUpdated {
-		log.Printf("[%s] App is outdated, updating now...\n", warnSign)
-
-		updateURL, err := findMatchingOSAndPlatform(latestRelease)
+		latestRelease, err := checkLatestReleaseGithub()
 		if err != nil {
-			log.Printf("[%s] Error finding release files: %s\n", errSign, err.Error())
+			log.Printf("[%s] Checking latest Github release failed: %s\n", errSign, err.Error())
 			return
 		}
 
-		// Windows update files will be .zip.
-		if strings.Contains(updateURL, "Windows") {
-			if err := handlePatchDownloadAndUnzipWindows(updateURL); err != nil {
-				log.Printf("[%s] Error downloading or unzipping patch: %s\n", errSign, err.Error())
-				return
-			}
-
-			if err := os.RemoveAll("./tmp"); err != nil {
-				log.Printf("[%s] Error removing temp directory: %s\n", errSign, err.Error())
-			}
-			// Linux and MacOS update files will be .tar.gz.
-		} else {
-			if err := handlePatchDownloadAndUnzip(updateURL); err != nil {
-				log.Printf("[%s] Error downloading or unzipping patch: %s\n", errSign, err.Error())
-				return
-			}
-
-			if err := os.RemoveAll("./tmp"); err != nil {
-				log.Printf("[%s] Error removing temp directory: %s\n", errSign, err.Error())
-			}
+		isUpdated, err := checkVersionMatch(latestRelease)
+		if err != nil {
+			log.Printf("[%s] Checking latest release version failed: %s\n", errSign, err.Error())
+			return
 		}
 
-		log.Printf("[%s] Please rerun the app to use the latest version\n", infSign)
+		if !isUpdated {
+			log.Printf("[%s] App is outdated, updating now...\n", warnSign)
 
-		return
-	} else {
-		log.Printf("[%s] App is already running newest version\n", sucSign)
+			updateURL, err := findMatchingOSAndPlatform(latestRelease)
+			if err != nil {
+				log.Printf("[%s] Error finding release files: %s\n", errSign, err.Error())
+				return
+			}
+
+			// Windows update files will be .zip.
+			if strings.Contains(updateURL, "Windows") {
+				if err := handlePatchDownloadAndUnzipWindows(updateURL); err != nil {
+					log.Printf("[%s] Error downloading or unzipping patch: %s\n", errSign, err.Error())
+					return
+				}
+
+				if err := os.RemoveAll("./tmp"); err != nil {
+					log.Printf("[%s] Error removing temp directory: %s\n", errSign, err.Error())
+				}
+			} else {
+				// Linux and MacOS update files will be .tar.gz.
+				if err := handlePatchDownloadAndUnzip(updateURL); err != nil {
+					log.Printf("[%s] Error downloading or unzipping patch: %s\n", errSign, err.Error())
+					return
+				}
+
+				if err := os.RemoveAll("./tmp"); err != nil {
+					log.Printf("[%s] Error removing temp directory: %s\n", errSign, err.Error())
+				}
+			}
+
+			log.Printf("[%s] Please rerun the app to use the latest version\n", infSign)
+
+			return
+		} else {
+			log.Printf("[%s] App is already running newest version\n", sucSign)
+		}
 	}
 
 	if err := createDefaultLogDirectory(); err != nil {
@@ -106,10 +113,6 @@ func main() {
 
 	// It is safe to use the WriteX methods from here.
 
-	if *ignoreChecks {
-		writeWarning("Using dev mode and ignoring checks, NOT RECOMMENDED")
-	}
-
 	cfg, err := loadConfig(*cfgPath)
 	if err != nil {
 		writeError(fmt.Sprintf("Error loading config: %s", err.Error()))
@@ -120,6 +123,33 @@ func main() {
 		if err := cfg.checkConfig(); err != nil {
 			writeError(fmt.Sprintf("Error checking config: %s", err.Error()))
 			return
+		}
+	}
+
+	// ! BETA FEATURE
+	// Query the status of CSGO via Steam API and query user's inventory for cases & capsules.
+	if *useBeta {
+		steamUp, err := isSteamCSGOAPIUp(cfg)
+		if err != nil {
+			writeError(fmt.Sprintf("Querying Steam API failed: %s", err.Error()))
+			return
+		}
+
+		if !steamUp {
+			writeWarning("Steam might be down or delayed")
+			return
+		}
+
+		itemCountMap, err := fetchCSGOInventory(cfg.SteamUserID64)
+		if err != nil {
+			writeError(fmt.Sprintf("Error fetching CSGO inventory: %s", err.Error()))
+			return
+		}
+
+		// Stickers contain "Sticker" in item.name
+		// Capsules contain "Base Grade ContaineR" in item.name
+		for name, am := range itemCountMap {
+			log.Printf("[%s] Name: %s ; Amount: %d\n", infSign, name, am)
 		}
 	}
 
@@ -185,7 +215,6 @@ func main() {
 	log.Printf("[%s] Done cleaning up, exiting...\n", sucSign)
 }
 
-// TODO: clean up code => split into multiple functions
 func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	callClear()
 

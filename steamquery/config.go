@@ -14,6 +14,7 @@ type config struct {
 	SpreadSheetID   string              `json:"spreadsheet_id"`
 	UpdateInterval  int                 `json:"update_interval"`
 	SteamAPIKey     string              `json:"steam_api_key"`
+	SteamUserID64   string              `json:"steam_id_64"`
 }
 
 func loadConfig(fileName string) (*config, error) {
@@ -58,6 +59,10 @@ func (c *config) checkConfig() error {
 
 	if c.SteamAPIKey == "" {
 		return errors.New("missing steam api key in config")
+	}
+
+	if c.SteamUserID64 == "" {
+		return errors.New("missing steam id 64 in config")
 	}
 
 	return nil

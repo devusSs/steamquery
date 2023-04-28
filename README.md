@@ -44,21 +44,6 @@ Then create a `config.json` file in a directory of your choice. Using the [files
 <br/>
 Use the [example config file](files/config.example.json) to create your own `config.json` file:
 
-```json
-{
-  "item_list": [
-    { "item_name (like on steam market)": "table_cell_on_google_sheet" },
-    { "item_name (like on steam market)": "table_cell_on_google_sheet" },
-    { "...": "..." }
-  ],
-  "last_updated_cell": "table_cell_to_show_last_update_on_google_sheet",
-  "error_cell": "table_cell_to_show_potential_errors_on_google_sheet",
-  "spreadsheet_id": "id_of_your_google_sheet_(get_from_link)",
-  "update_interval": 2,
-  "steam_api_key": "steam_api_key"
-}
-```
-
 <br/>
 
 ## Building and running the app
