@@ -32,16 +32,15 @@ or
 
 <br/>
 
-Go to [Google Cloud](https://cloud.google.com/), set up a new project and enable the Google Drive API and the Google Sheets API. Then add a service account and generate keys in json format. Place that json file in a directory of your choice. Using the [files](files/) directory in the projects directory is recommended however while naming the json file `gcloud.json`.
-If you need help doing that please refrain from sending me an E-Mail or opening an issue. There probably are good tutorials on Google or on Stackoverflow for that topic.
+Go to [Google Cloud](https://cloud.google.com/), set up a new project and enable the Google Drive API and the Google Sheets API. Then add a service account and generate keys in json format. Place that json file in a directory of your choice. Using the [files](files/) directory in the projects directory is recommended however while naming the json file `gcloud.json`. Make sure to add the auto generated E-Mail in your Google Cloud service account as an editor on your Google sheet.
 
 <br/>
 
-Go to your [Steam dev settings](https://steamcommunity.com/dev/apikey) and generate an API key. It will be needed to query the status of the Steam API / Sessions Managers / Community Status of CSGO.
+Go to your [Steam dev settings](https://steamcommunity.com/dev/apikey) and generate an API key. It will be needed to query the status of the Steam API / Sessions Managers / Community Status of CSGO. It will also be used to query your CSGO inventory on Steam later on.
 
 <br/>
 
-Then create a `config.json` file a directory of your choice. Using the [files](files/) directory in the projects directory is recommended however while naming the config `config.json`.
+Then create a `config.json` file in a directory of your choice. Using the [files](files/) directory in the projects directory is recommended however while naming the config `config.json`.
 <br/>
 Use the [example config file](files/config.example.json) to create your own `config.json` file:
 
@@ -62,16 +61,11 @@ Use the [example config file](files/config.example.json) to create your own `con
 
 <br/>
 
-`Out of experience: make sure to use an integer value for the update interval (remove the quotes)`
-
 ## Building and running the app
 
 Either download an already compiled program from the [releases](https://github.com/devusSs/steamquery/releases) section or clone the repository and compile the program yourself. You will need the [Go(lang)](https://go.dev) binaries for that.
 
 You can then run the app with either default flags or use the defined flags `-c` and `-g` to set your config file path and your gcloud.json file path respectively.
-
-Successful output should look like this:
-![output.jpg](./docs/exoutput.png)
 
 Errors will usually be self-explanatory. Any weird errors may require the use of [Google](https://google.com) or [creating an issue](https://github.com/devusSs/steamquery/issues) on Github.
 
