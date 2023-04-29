@@ -10,6 +10,7 @@ tmp/
 testing/
 Makefile
 .goreleaser.yaml
+TODOS.txt
 
 .vscode/*
 !.vscode/extensions.json

@@ -14,6 +14,7 @@ permissions:
   contents: read
 jobs:
   golangci:
+    if: ${{ github.ref == 'refs/heads/main' }}
     strategy:
       matrix:
         go: [1.20.3]
