@@ -24,8 +24,7 @@ func listenForCTRLC() {
 
 // Function to create lastQuery file.
 func createLastQueryRunFile() error {
-	f, err := os.OpenFile(fmt.Sprintf("%s/last_query.json", defaultLogPath),
-		os.O_WRONLY|os.O_CREATE, os.ModePerm)
+	f, err := os.OpenFile(fmt.Sprintf("%s/last_query.json", defaultLogPath), os.O_CREATE|os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return err
 	}
