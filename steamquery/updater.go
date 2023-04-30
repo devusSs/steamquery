@@ -66,6 +66,15 @@ func findMatchingOSAndPlatform(release *github.RepositoryRelease) (string, error
 	osV := runtime.GOOS
 	pV := runtime.GOARCH
 
+	// Fix versions / architecture to match Github releases.
+	if pV == "amd64" {
+		pV = "x86_64"
+	}
+
+	if pV == "386" {
+		pV = "i386"
+	}
+
 	for _, asset := range release.Assets {
 		name := strings.ToLower(*asset.Name)
 
