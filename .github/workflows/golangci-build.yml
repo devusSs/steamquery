@@ -1,13 +1,9 @@
 name: golangci-build
 on:
   push:
-    tags:
-      - v*
     branches:
       - main
   pull_request:
-    tags:
-      - v*
     branches:
       - main
 permissions:
