@@ -15,6 +15,8 @@ type config struct {
 	UpdateInterval  int                 `json:"update_interval"`
 	SteamAPIKey     string              `json:"steam_api_key"`
 	SteamUserID64   string              `json:"steam_id_64"`
+	TotalValueCell  string              `json:"total_value_cell"`
+	DiffCell        string              `json:"value_difference_cell"`
 }
 
 func loadConfig(fileName string) (*config, error) {
@@ -63,6 +65,16 @@ func (c *config) checkConfig() error {
 
 	if c.SteamUserID64 == "" {
 		return errors.New("missing steam id 64 in config")
+	}
+
+	if c.TotalValueCell == "" {
+		return errors.New("missing total value cell in config")
+
+	}
+
+	if c.DiffCell == "" {
+		return errors.New("missing value difference cell in config")
+
 	}
 
 	return nil

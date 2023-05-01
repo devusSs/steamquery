@@ -164,6 +164,7 @@ func main() {
 	if !*ignoreChecks {
 		if err := svc.testConnection(); err != nil {
 			writeError(fmt.Sprintf("Error getting spreadsheet test info: %s", err.Error()))
+			return
 		}
 	}
 
@@ -217,6 +218,14 @@ func main() {
 
 func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	callClear()
+
+	// Fetch total value pre run.
+	preRunTotalValue, err := svc.getTotalValueCell(cfg)
+	if err != nil {
+		writeError(fmt.Sprintf("Error getting spreadsheet total value info: %s", err.Error()))
+		return
+	}
+	totalValuePreRun = preRunTotalValue
 
 	if !ignoreChecks {
 		steamUp, err := isSteamCSGOAPIUp(cfg)
@@ -393,6 +402,32 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 			}
 		}
 	}
+
+	// Wait before fetching total value to give Google sheets time to calculate.
+	writeInfo("Sleeping for 3 seconds to give Google sheets time to calculate...")
+	time.Sleep(3 * time.Second)
+
+	// Fetch total value post run.
+	postRunTotalValue, err := svc.getTotalValueCell(cfg)
+	if err != nil {
+		writeError(fmt.Sprintf("Error getting spreadsheet total value info: %s", err.Error()))
+		return
+	}
+	totalValuePostRun = postRunTotalValue
+
+	totalValueDifference := strings.ReplaceAll(calculateTotalValueDifference(), ".", ",")
+
+	var totalValueInterface []interface{}
+
+	totalValueInterface = append(totalValueInterface, totalValueDifference)
+
+	// Update total value difference on sheet
+	if err := updateEntryOnSheet(cfg.DiffCell, totalValueInterface, svc); err != nil {
+		writeError(fmt.Sprintf("Error on updating total value difference cell value: %s", err.Error()))
+		return
+	}
+
+	writeSuccess("Successfully updated value difference to last run")
 
 	var lastUpdateInterface []interface{}
 
