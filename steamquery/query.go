@@ -462,7 +462,6 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	lastQueryData.LastRun = time.Now()
 
 	if firstQueryRun.IsZero() {
-		log.Println("GOT ZERO DATE FOR FIRST QUERY RUN")
 		lastQueryData.FirstRun = time.Now()
 	}
 
