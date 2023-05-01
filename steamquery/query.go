@@ -396,13 +396,7 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 
 	var lastUpdateInterface []interface{}
 
-	timeNow := time.Now()
-
-	hour := timeNow.Hour()
-	minute := timeNow.Minute()
-	year, month, day := timeNow.Date()
-
-	lastUpdateInterface = append(lastUpdateInterface, fmt.Sprintf("%d.%d.%d - %d:%d", day, int(month), year, hour, minute))
+	lastUpdateInterface = append(lastUpdateInterface, time.Now().Format(time.DateTime))
 
 	if err := svc.writeSingleEntryToTable(cfg.LastUpdatedCell, lastUpdateInterface); err != nil {
 		writeError(fmt.Sprintf("Error updating last updated cell: %s", err.Error()))
