@@ -260,6 +260,7 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 				writeWarning(fmt.Sprintf("Please manually run this app again in %.0f second(s)", time.Until(lastQueryRun.Add(1*time.Minute)).Seconds()))
 				return
 			}
+			writeInfo(fmt.Sprintf("First query run: %v", firstQueryRun))
 			writeInfo(fmt.Sprintf("Last query run: %v", lastQueryRun))
 		}
 	}
