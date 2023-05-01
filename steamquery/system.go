@@ -35,22 +35,22 @@ func createLastQueryRunFile() error {
 // Function to write to lastQuery file.
 func writeToQueryLogFile(message interface{}) error {
 	// Truncate file before.
-	if err := os.Truncate(lastQueryRunFile.Name(), 0); err != nil {
+	if err := lastQueryRunFile.Truncate(0); err != nil {
+		return err
+	}
+	// Jump to beginning of file before writing.
+	_, err := lastQueryRunFile.Seek(0, 0)
+	if err != nil {
 		return err
 	}
 	// Write new and old values to file .
-	_, err := lastQueryRunFile.WriteString(fmt.Sprintf("%v", message))
+	_, err = lastQueryRunFile.WriteString(fmt.Sprintf("%v", message))
 	return err
 }
 
 // Function to read from lastQuery file.
 func readFromQueryLogFile() (*lastQueryRunFormat, error) {
-	f, err := os.Open(lastQueryRunFile.Name())
-	if err != nil {
-		return nil, err
-	}
-
-	input, err := io.ReadAll(f)
+	input, err := io.ReadAll(lastQueryRunFile)
 	if err != nil {
 		return nil, err
 	}
