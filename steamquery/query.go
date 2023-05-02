@@ -124,6 +124,9 @@ func main() {
 		for name, am := range itemCountMap {
 			log.Printf("[%s] Name: %s ; Amount: %d\n", infSign, name, am)
 		}
+
+		writeWarning("If you are missing items in this list, they might be stored in storage units.")
+		writeWarning("Please remove them from the storage units, else this app cannot query them")
 	}
 
 	spreadsheetID = cfg.SpreadSheetID
