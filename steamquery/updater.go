@@ -4,133 +4,175 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"compress/gzip"
-	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/blang/semver"
-	"github.com/google/go-github/v30/github"
+	"github.com/Masterminds/semver/v3"
 )
 
 const (
-	// TODO: keep updating that version
 	version = "0.4.0"
 
-	repoOwner = "devusSs"
-	repoName  = "steamquery"
+	updateURL = "https://api.github.com/repos/devusSs/steamquery/releases/latest"
 )
 
 var (
-	client *github.Client = github.NewClient(nil)
+	osV   = runtime.GOOS
+	archV = runtime.GOARCH
 )
 
-func checkLatestReleaseGithub() (*github.RepositoryRelease, error) {
-	rel, res, err := client.Repositories.ListReleases(context.Background(), repoOwner, repoName, nil)
+// ChatGPT answer, adapted for own needs.
+func findLatestReleaseURL() (string, string, error) {
+	resp, err := http.Get(updateURL)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
-	defer res.Body.Close()
+	defer resp.Body.Close()
 
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("got unwanted Github error code: %d", res.StatusCode)
+	var release struct {
+		TagName string `json:"tag_name"`
+		Assets  []struct {
+			Name        string `json:"name"`
+			DownloadURL string `json:"browser_download_url"`
+		} `json:"assets"`
 	}
 
-	latestRelease := rel[0]
-
-	return latestRelease, nil
-}
-
-func checkVersionMatch(release *github.RepositoryRelease) (bool, error) {
-	currentVersion, err := semver.Parse(strings.ReplaceAll(version, "v", ""))
+	err = json.NewDecoder(resp.Body).Decode(&release)
 	if err != nil {
-		return false, err
+		return "", "", err
 	}
-
-	latestVersion, err := semver.Parse(strings.ReplaceAll(*release.TagName, "v", ""))
-	if err != nil {
-		return false, err
-	}
-
-	return latestVersion.Equals(currentVersion), nil
-}
-
-// Finds the proper release file and download url for our OS and platform.
-func findMatchingOSAndPlatform(release *github.RepositoryRelease) (string, error) {
-	osV := runtime.GOOS
-	pV := runtime.GOARCH
 
 	// Fix versions / architecture to match Github releases.
-	if pV == "amd64" {
-		pV = "x86_64"
+	if archV == "amd64" {
+		archV = "x86_64"
 	}
 
-	if pV == "386" {
-		pV = "i386"
+	if archV == "386" {
+		archV = "i386"
 	}
 
+	// Find matching release for our OS & architecture.
 	for _, asset := range release.Assets {
-		name := strings.ToLower(*asset.Name)
+		releaseName := strings.ToLower(asset.Name)
 
-		if strings.Contains(name, osV) && strings.Contains(name, pV) {
-			return *asset.BrowserDownloadURL, nil
+		if strings.Contains(releaseName, archV) && strings.Contains(releaseName, osV) {
+			return asset.DownloadURL, release.TagName, nil
 		}
 	}
 
-	return "", errors.New("no matching release found")
+	return "", "", errors.New("no matching release found")
 }
 
-// Helper function to unzip the tar.gz file we got from Github.
-// Original answer provided by ChatGPT, adapted to my needs.
-func handlePatchDownloadAndUnzip(url string) error {
-	// Create a temporary directory.
-	if _, err := os.Stat("./tmp"); os.IsNotExist(err) {
-		if err := os.Mkdir("./tmp", os.ModePerm); err != nil {
-			return err
-		}
-	}
-
-	// Create a temporary file to save the downloaded archive
-	out, err := os.CreateTemp("./tmp", "download-*.tar.gz")
+// Compare current version with latest version
+func newerVersionAvailable(newVersion string) (bool, error) {
+	vOld, err := semver.NewVersion(version)
 	if err != nil {
-		return err
+		return false, err
 	}
-	defer out.Close()
 
-	// Download the file
+	vNew, err := semver.NewVersion(strings.ReplaceAll(newVersion, "v", ""))
+	if err != nil {
+		return false, err
+	}
+
+	return !vNew.Equal(vOld), nil
+}
+
+// Function to download and unzip as well as install new version on Windows.
+// Original answer by ChatGPT, adapted to own needs.
+func patchWindows(url string) error {
+	// Download the zip file
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	// Write the downloaded data to the file
-	_, err = io.Copy(out, resp.Body)
+	// Create a temporary file to store the downloaded zip file
+	tempZipFile, err := os.CreateTemp("", "temp-zip-*.zip")
 	if err != nil {
 		return err
 	}
+	defer os.Remove(tempZipFile.Name())
+	defer tempZipFile.Close()
+
+	// Write the zip file contents to the temporary file
+	_, err = io.Copy(tempZipFile, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	// Open the zip file
+	r, err := zip.OpenReader(tempZipFile.Name())
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	// Find the executable file in the zip
+	var exeFile *zip.File
+	for _, f := range r.File {
+		if filepath.Ext(f.Name) == ".exe" {
+			exeFile = f
+			break
+		}
+	}
+	if exeFile == nil {
+		return errors.New("could not find executable file in zip")
+	}
+
+	// Extract the executable file to the current directory
+	exePath := filepath.Join(".", filepath.Base(exeFile.Name))
+	exeFileReader, err := exeFile.Open()
+	if err != nil {
+		return err
+	}
+	defer exeFileReader.Close()
+
+	exeFileWriter, err := os.Create(exePath)
+	if err != nil {
+		return err
+	}
+	defer exeFileWriter.Close()
+	_, err = io.Copy(exeFileWriter, exeFileReader)
+	if err != nil {
+		return err
+	}
+
+	// Replace the current executable with the extracted executable
+	err = os.Rename(exePath, os.Args[0])
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Function to download and unzip as well as install new version on Unix systems.
+// Original answer by ChatGPT, adapted to own needs.
+func patchUnix(url string) error {
+	// Download the .tar.gz file
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
 	// Unzip the file
-	archive, err := os.Open(out.Name())
-	if err != nil {
-		return err
-	}
-	defer archive.Close()
-
-	gzipReader, err := gzip.NewReader(archive)
+	gzipReader, err := gzip.NewReader(resp.Body)
 	if err != nil {
 		return err
 	}
 	defer gzipReader.Close()
 
 	tarReader := tar.NewReader(gzipReader)
-
 	for {
 		header, err := tarReader.Next()
 		if err == io.EOF {
@@ -140,114 +182,34 @@ func handlePatchDownloadAndUnzip(url string) error {
 			return err
 		}
 
-		// Extract the file
-		path := filepath.Join(".", header.Name)
-		info := header.FileInfo()
-		if info.IsDir() {
-			if err := os.MkdirAll(path, info.Mode()); err != nil {
+		target := filepath.Join(".", header.Name)
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(target, 0755); err != nil {
 				return err
 			}
-		} else {
-			outFile, err := os.Create(path)
+		case tar.TypeReg:
+			file, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}
-			defer outFile.Close()
+			defer file.Close()
 
-			_, err = io.Copy(outFile, tarReader)
-			if err != nil {
+			if _, err := io.Copy(file, tarReader); err != nil {
 				return err
 			}
+		default:
+			return fmt.Errorf("unknown file type: %v", header.Typeflag)
 		}
 	}
 
-	return nil
-}
-
-// Helper function to unzip the .zip file we got from Github.
-// Original answer provided by ChatGPT, adapted to my needs.
-func handlePatchDownloadAndUnzipWindows(url string) error {
-	// Create a temporary directory.
-	if _, err := os.Stat("./tmp"); os.IsNotExist(err) {
-		if err := os.Mkdir("./tmp", os.ModePerm); err != nil {
-			return err
-		}
-	}
-
-	// Name of the local file to save the .zip as
-	filename := "./tmp/latest.zip"
-
-	// Create the file on disk to save the .zip to
-	out, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// Download the .zip from the URL and save it to the file on disk
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	_, err = io.Copy(out, resp.Body)
+	// Replace the current program with the unzipped program
+	selfPath, err := os.Executable()
 	if err != nil {
 		return err
 	}
 
-	// Unzip the file
-	zipReader, err := zip.OpenReader(filename)
-	if err != nil {
-		return err
-	}
-	defer zipReader.Close()
-
-	var binaryPath string
-	for _, file := range zipReader.File {
-		if filepath.Ext(file.Name) == ".exe" {
-			path := filepath.Join("./tmp", file.Name)
-
-			fileReader, err := file.Open()
-			if err != nil {
-				return err
-			}
-			defer fileReader.Close()
-
-			targetFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode())
-			if err != nil {
-				return err
-			}
-			defer targetFile.Close()
-
-			if _, err := io.Copy(targetFile, fileReader); err != nil {
-				return err
-			}
-
-			binaryPath = path
-			break
-		}
-	}
-
-	if binaryPath == "" {
-		return errors.New("could not find binary in .zip file")
-	}
-
-	// Replace the current program binary with the binary from the .zip
-	currentBinaryPath, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	if runtime.GOOS == "windows" {
-		// On Windows, we need to close the current program before replacing its binary
-		if err := exec.Command("taskkill", "/F", "/IM", filepath.Base(currentBinaryPath)).Run(); err != nil {
-			return err
-		}
-	}
-
-	err = os.Rename(binaryPath, currentBinaryPath)
-	if err != nil {
+	if err := os.Rename(filepath.Join(".", "program"), selfPath); err != nil {
 		return err
 	}
 

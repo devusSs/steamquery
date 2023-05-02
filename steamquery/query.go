@@ -31,69 +31,43 @@ var (
 func main() {
 	cfgPath := flag.String("c", "./files/config.json", "sets the config path")
 	gCloudPath := flag.String("g", "./files/gcloud.json", "sets the google cloud config path")
-	ignoreChecks := flag.Bool("ic", false, "[DEV] ignores checks (update, config, sheets conn, steam conn)")
 	useBeta := flag.Bool("b", false, "opts into beta features")
 	flag.Parse()
 
-	if *ignoreChecks {
-		log.Printf("[%s] Ignoring checks, NOT RECOMMENDED!\n", warnSign)
-	}
-
 	log.Printf("[%s] Currently running app version %s\n", infSign, version)
 
-	// Check for updates.
-	if !*ignoreChecks {
-		log.Printf("[%s] Checking for updates...\n", infSign)
+	log.Printf("[%s] Checking for updates...\n", infSign)
 
-		latestRelease, err := checkLatestReleaseGithub()
-		if err != nil {
-			log.Printf("[%s] Checking latest Github release failed: %s\n", errSign, err.Error())
-			return
-		}
+	updateURL, newVersion, err := findLatestReleaseURL()
+	if err != nil {
+		log.Printf("[%s] Getting update url failed: %s\n", errSign, err.Error())
+		return
+	}
 
-		isUpdated, err := checkVersionMatch(latestRelease)
-		if err != nil {
-			log.Printf("[%s] Checking latest release version failed: %s\n", errSign, err.Error())
-			return
-		}
+	newVersionAvai, err := newerVersionAvailable(newVersion)
+	if err != nil {
+		log.Printf("[%s] Comparing versions failed: %s\n", errSign, err.Error())
+		return
+	}
 
-		if !isUpdated {
-			log.Printf("[%s] App is outdated, updating now...\n", warnSign)
+	if newVersionAvai {
+		log.Printf("[%s] New version available (%s), updating and patching now...\n", warnSign, newVersion)
 
-			updateURL, err := findMatchingOSAndPlatform(latestRelease)
-			if err != nil {
-				log.Printf("[%s] Error finding release files: %s\n", errSign, err.Error())
+		if osV == "windows" {
+			if err := patchWindows(updateURL); err != nil {
+				log.Printf("[%s] Patching app failed: %s\n", errSign, err.Error())
 				return
 			}
-
-			// Windows update files will be .zip.
-			if strings.Contains(updateURL, "Windows") {
-				if err := handlePatchDownloadAndUnzipWindows(updateURL); err != nil {
-					log.Printf("[%s] Error downloading or unzipping patch: %s\n", errSign, err.Error())
-					return
-				}
-
-				if err := os.RemoveAll("./tmp"); err != nil {
-					log.Printf("[%s] Error removing temp directory: %s\n", errSign, err.Error())
-				}
-			} else {
-				// Linux and MacOS update files will be .tar.gz.
-				if err := handlePatchDownloadAndUnzip(updateURL); err != nil {
-					log.Printf("[%s] Error downloading or unzipping patch: %s\n", errSign, err.Error())
-					return
-				}
-
-				if err := os.RemoveAll("./tmp"); err != nil {
-					log.Printf("[%s] Error removing temp directory: %s\n", errSign, err.Error())
-				}
-			}
-
-			log.Printf("[%s] Please rerun the app to use the latest version\n", infSign)
-
-			return
 		} else {
-			log.Printf("[%s] App is already running newest version\n", sucSign)
+			if err := patchUnix(updateURL); err != nil {
+				log.Printf("[%s] Patching app failed: %s\n", errSign, err.Error())
+				return
+			}
 		}
+
+		log.Printf("[%s] Update succeeded (%s), proceeding...\n", sucSign, newVersion)
+	} else {
+		log.Printf("[%s] App is up to date, proceeding\n", infSign)
 	}
 
 	if err := createDefaultLogDirectory(); err != nil {
@@ -119,11 +93,9 @@ func main() {
 		return
 	}
 
-	if !*ignoreChecks {
-		if err := cfg.checkConfig(); err != nil {
-			writeError(fmt.Sprintf("Error checking config: %s", err.Error()))
-			return
-		}
+	if err := cfg.checkConfig(); err != nil {
+		writeError(fmt.Sprintf("Error checking config: %s", err.Error()))
+		return
 	}
 
 	// ! BETA FEATURE
@@ -161,11 +133,9 @@ func main() {
 		return
 	}
 
-	if !*ignoreChecks {
-		if err := svc.testConnection(); err != nil {
-			writeError(fmt.Sprintf("Error getting spreadsheet test info: %s", err.Error()))
-			return
-		}
+	if err := svc.testConnection(); err != nil {
+		writeError(fmt.Sprintf("Error getting spreadsheet test info: %s", err.Error()))
+		return
 	}
 
 	clear = make(map[string]func())
@@ -197,7 +167,7 @@ func main() {
 		}
 	}
 
-	runQuery(cfg, svc, *ignoreChecks)
+	runQuery(cfg, svc)
 
 	listenForCTRLC()
 
@@ -216,7 +186,7 @@ func main() {
 	log.Printf("[%s] Done cleaning up, exiting...\n", sucSign)
 }
 
-func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
+func runQuery(cfg *config, svc *spreadsheetService) {
 	callClear()
 
 	// Fetch total value pre run.
@@ -227,51 +197,49 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	}
 	totalValuePreRun = preRunTotalValue
 
-	if !ignoreChecks {
-		steamUp, err := isSteamCSGOAPIUp(cfg)
-		if err != nil {
-			writeError(fmt.Sprintf("Querying Steam API failed: %s", err.Error()))
+	steamUp, err := isSteamCSGOAPIUp(cfg)
+	if err != nil {
+		writeError(fmt.Sprintf("Querying Steam API failed: %s", err.Error()))
 
-			writeInfo("Rerunning query in 30 mins...")
+		writeInfo("Rerunning query in 30 mins...")
 
-			time.AfterFunc(30*time.Minute, func() {
-				runQuery(cfg, svc, ignoreChecks)
-			})
+		time.AfterFunc(30*time.Minute, func() {
+			runQuery(cfg, svc)
+		})
 
+		return
+	}
+
+	if !steamUp {
+		writeWarning("Steam might be down or delayed")
+		writeInfo("Rerunning query in 30 mins...")
+
+		time.AfterFunc(30*time.Minute, func() {
+			runQuery(cfg, svc)
+		})
+
+		return
+	}
+
+	jsonQuery, err := readFromQueryLogFile()
+	if err != nil {
+		writeError(fmt.Sprintf("Error reading last query log file: %s", err.Error()))
+		return
+	}
+
+	lastQueryRun = jsonQuery.LastRun
+	firstQueryRun = jsonQuery.FirstRun
+
+	if lastQueryRun.IsZero() {
+		writeInfo("Running query for 1st time...")
+	} else {
+		if time.Since(lastQueryRun) < 1*time.Minute {
+			writeWarning(fmt.Sprintf("Time since last query run: %.0f second(s)", time.Since(lastQueryRun).Seconds()))
+			writeWarning(fmt.Sprintf("Please manually run this app again in %.0f second(s)", time.Until(lastQueryRun.Add(1*time.Minute)).Seconds()))
 			return
 		}
-
-		if !steamUp {
-			writeWarning("Steam might be down or delayed")
-			writeInfo("Rerunning query in 30 mins...")
-
-			time.AfterFunc(30*time.Minute, func() {
-				runQuery(cfg, svc, ignoreChecks)
-			})
-
-			return
-		}
-
-		jsonQuery, err := readFromQueryLogFile()
-		if err != nil {
-			writeError(fmt.Sprintf("Error reading last query log file: %s", err.Error()))
-			return
-		}
-
-		lastQueryRun = jsonQuery.LastRun
-		firstQueryRun = jsonQuery.FirstRun
-
-		if lastQueryRun.IsZero() {
-			writeInfo("Running query for 1st time...")
-		} else {
-			if time.Since(lastQueryRun) < 1*time.Minute {
-				writeWarning(fmt.Sprintf("Time since last query run: %.0f second(s)", time.Since(lastQueryRun).Seconds()))
-				writeWarning(fmt.Sprintf("Please manually run this app again in %.0f second(s)", time.Until(lastQueryRun.Add(1*time.Minute)).Seconds()))
-				return
-			}
-			writeInfo(fmt.Sprintf("First query run: %v", firstQueryRun))
-			writeInfo(fmt.Sprintf("Last query run: %v", lastQueryRun))
-		}
+		writeInfo(fmt.Sprintf("First query run: %v", firstQueryRun))
+		writeInfo(fmt.Sprintf("Last query run: %v", lastQueryRun))
 	}
 
 	client := http.Client{}
@@ -507,7 +475,7 @@ func runQuery(cfg *config, svc *spreadsheetService, ignoreChecks bool) {
 	}
 
 	time.AfterFunc(time.Duration(cfg.UpdateInterval)*time.Hour, func() {
-		runQuery(cfg, svc, ignoreChecks)
+		runQuery(cfg, svc)
 	})
 }
 
