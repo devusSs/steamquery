@@ -14,7 +14,7 @@ Please contact the owner (devusSs) at devuscs@gmail.com to resolve any issues (e
 
 Create a new raw [Google Sheet](https://docs.google.com/) and set it up like so (must not exactly match):
 ![sheets.jpg](./docs/googlesheet.png)
-`Make sure there is a cell for last updated and errors each.`
+`Make sure there is a cell for last updated, individual price per item, total value of items, value difference to last run and errors each.`
 
 The price /item column will be updated for each item specified in your config file (check below).
 
@@ -37,6 +37,7 @@ Go to [Google Cloud](https://cloud.google.com/), set up a new project and enable
 <br/>
 
 Go to your [Steam dev settings](https://steamcommunity.com/dev/apikey) and generate an API key. It will be needed to query the status of the Steam API / Sessions Managers / Community Status of CSGO. It will also be used to query your CSGO inventory on Steam later on.
+You will also need to set your Steam ID 64 (fetch it via sites like [SteamIDUK](https://steamid.uk)) so we can query your Steam (CSGO) inventory programmatically.
 
 <br/>
 
