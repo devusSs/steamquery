@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	version = "0.4.0"
+	version = "0.4.1"
 
 	updateURL = "https://api.github.com/repos/devusSs/steamquery/releases/latest"
 )
