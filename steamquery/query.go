@@ -32,6 +32,7 @@ func main() {
 	cfgPath := flag.String("c", "./files/config.json", "sets the config path")
 	gCloudPath := flag.String("g", "./files/gcloud.json", "sets the google cloud config path")
 	useBeta := flag.Bool("b", false, "opts into beta features")
+	testRun := flag.Bool("t", false, "runs app in test mode, does not run actual query")
 	flag.Parse()
 
 	log.Printf("[%s] Currently running app version %s\n", infSign, version)
@@ -165,6 +166,11 @@ func main() {
 			writeError(fmt.Sprintf("Error running clear screen func: %s", err.Error()))
 			return
 		}
+	}
+
+	if *testRun {
+		writeWarning("App ran in test mode, exiting before query run")
+		return
 	}
 
 	runQuery(cfg, svc)
