@@ -66,3 +66,12 @@ func readFromQueryLogFile() (*lastQueryRunFormat, error) {
 
 	return &l, err
 }
+
+// Function to truncate lastQuery file in case it is too old or invalid.
+func truncateLastQueryRunFile() error {
+	if err := lastQueryRunFile.Truncate(0); err != nil {
+		return err
+	}
+	_, err := lastQueryRunFile.Seek(0, 0)
+	return err
+}

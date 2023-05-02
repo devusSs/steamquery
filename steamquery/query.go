@@ -236,16 +236,24 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 	lastQueryRun = jsonQuery.LastRun
 	firstQueryRun = jsonQuery.FirstRun
 
-	if lastQueryRun.IsZero() {
-		writeInfo("Running query for 1st time...")
-	} else {
-		if time.Since(lastQueryRun) < 1*time.Minute {
-			writeWarning(fmt.Sprintf("Time since last query run: %.0f second(s)", time.Since(lastQueryRun).Seconds()))
-			writeWarning(fmt.Sprintf("Please manually run this app again in %.0f second(s)", time.Until(lastQueryRun.Add(1*time.Minute)).Seconds()))
-			return
+	if firstQueryRun.IsZero() {
+		if err := truncateLastQueryRunFile(); err != nil {
+			writeError(fmt.Sprintf("Error truncating last query run file: %s", err.Error()))
 		}
-		writeInfo(fmt.Sprintf("First query run: %v", firstQueryRun))
-		writeInfo(fmt.Sprintf("Last query run: %v", lastQueryRun))
+
+		writeWarning("Last query run file was too old or invalid, truncated file and proceeding...")
+	} else {
+		if lastQueryRun.IsZero() {
+			writeInfo("Running query for 1st time...")
+		} else {
+			if time.Since(lastQueryRun) < 1*time.Minute {
+				writeWarning(fmt.Sprintf("Time since last query run: %.0f second(s)", time.Since(lastQueryRun).Seconds()))
+				writeWarning(fmt.Sprintf("Please manually run this app again in %.0f second(s)", time.Until(lastQueryRun.Add(1*time.Minute)).Seconds()))
+				return
+			}
+			writeInfo(fmt.Sprintf("First query run: %v", firstQueryRun))
+			writeInfo(fmt.Sprintf("Last query run: %v", lastQueryRun))
+		}
 	}
 
 	client := http.Client{}
