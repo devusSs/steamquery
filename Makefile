@@ -1,5 +1,5 @@
 # Update the version to your needs.
-BUILD_VERSION = v0.4.0
+BUILD_VERSION = $(STEAMQUERY_VERSION) # Set this via env.
 BUILD_DATE=$$(date +%Y.%m.%d-%H:%M:%S)
 
 # DO NOT CHANGE.
