@@ -83,12 +83,15 @@ func findLatestReleaseURL() (string, string, error) {
 
 // Compare current version with latest version
 func newerVersionAvailable(newVersion string) (bool, error) {
-	vOld, err := semver.NewVersion(buildVersion)
+	currentBuild := strings.ReplaceAll(buildVersion, "v", "")
+	newBuild := strings.ReplaceAll(newVersion, "v", "")
+
+	vOld, err := semver.NewVersion(currentBuild)
 	if err != nil {
 		return false, err
 	}
 
-	vNew, err := semver.NewVersion(strings.ReplaceAll(newVersion, "v", ""))
+	vNew, err := semver.NewVersion(newBuild)
 	if err != nil {
 		return false, err
 	}
