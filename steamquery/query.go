@@ -35,7 +35,26 @@ func main() {
 	testRun := flag.Bool("t", false, "runs app in test mode, does not run actual query")
 	flag.Parse()
 
-	log.Printf("[%s] Currently running app version %s\n", infSign, version)
+	if *testRun {
+		log.Printf("[%s] App is running in test mode\n", warnSign)
+		fmt.Println()
+		printBuildInformation()
+		fmt.Println()
+		printTestInfo(*useBeta, *cfgPath, *gCloudPath)
+
+		fmt.Println()
+
+		log.Printf("[%s] Writing info to file...\n", infSign)
+
+		if err := saveTestInfoToFile(*useBeta, *cfgPath, *gCloudPath); err != nil {
+			log.Printf("[%s] Error writing info to file: %s\n", errSign, err.Error())
+			return
+		}
+
+		log.Printf("[%s] Successfully saved info to file \"%s\"\n", sucSign, testInfoFileName)
+
+		return
+	}
 
 	log.Printf("[%s] Checking for updates...\n", infSign)
 
@@ -54,7 +73,7 @@ func main() {
 	if newVersionAvai {
 		log.Printf("[%s] New version available (%s), updating and patching now...\n", warnSign, newVersion)
 
-		if osV == "windows" {
+		if buildOS == "windows" {
 			if err := patchWindows(updateURL); err != nil {
 				log.Printf("[%s] Patching app failed: %s\n", errSign, err.Error())
 				return
@@ -169,11 +188,6 @@ func main() {
 			writeError(fmt.Sprintf("Error running clear screen func: %s", err.Error()))
 			return
 		}
-	}
-
-	if *testRun {
-		writeWarning("App ran in test mode, exiting before query run")
-		return
 	}
 
 	runQuery(cfg, svc)

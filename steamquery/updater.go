@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,15 +19,25 @@ import (
 )
 
 const (
-	version = "0.4.1"
-
 	updateURL = "https://api.github.com/repos/devusSs/steamquery/releases/latest"
 )
 
 var (
-	osV   = runtime.GOOS
-	archV = runtime.GOARCH
+	buildVersion = ""
+	buildDate    = ""
+	buildOS      = runtime.GOOS
+	buildArch    = runtime.GOARCH
+	goVersion    = runtime.Version()
 )
+
+// Function to print build information.
+func printBuildInformation() {
+	log.Printf("[%s] Build version: \t\t%s\n", infSign, buildVersion)
+	log.Printf("[%s] Build date: \t\t%s\n", infSign, buildDate)
+	log.Printf("[%s] Build OS: \t\t%s\n", infSign, buildOS)
+	log.Printf("[%s] Build arch: \t\t%s\n", infSign, buildArch)
+	log.Printf("[%s] Go version: \t\t%s\n", infSign, goVersion)
+}
 
 // ChatGPT answer, adapted for own needs.
 func findLatestReleaseURL() (string, string, error) {
@@ -50,19 +61,19 @@ func findLatestReleaseURL() (string, string, error) {
 	}
 
 	// Fix versions / architecture to match Github releases.
-	if archV == "amd64" {
-		archV = "x86_64"
+	if buildArch == "amd64" {
+		buildArch = "x86_64"
 	}
 
-	if archV == "386" {
-		archV = "i386"
+	if buildArch == "386" {
+		buildArch = "i386"
 	}
 
 	// Find matching release for our OS & architecture.
 	for _, asset := range release.Assets {
 		releaseName := strings.ToLower(asset.Name)
 
-		if strings.Contains(releaseName, archV) && strings.Contains(releaseName, osV) {
+		if strings.Contains(releaseName, buildArch) && strings.Contains(releaseName, buildOS) {
 			return asset.DownloadURL, release.TagName, nil
 		}
 	}
@@ -72,7 +83,7 @@ func findLatestReleaseURL() (string, string, error) {
 
 // Compare current version with latest version
 func newerVersionAvailable(newVersion string) (bool, error) {
-	vOld, err := semver.NewVersion(version)
+	vOld, err := semver.NewVersion(buildVersion)
 	if err != nil {
 		return false, err
 	}
@@ -146,6 +157,7 @@ func patchWindows(url string) error {
 		return err
 	}
 
+	// TODO: this crashes program (? not tested yet)
 	// Replace the current executable with the extracted executable
 	err = os.Rename(exePath, os.Args[0])
 	if err != nil {
@@ -209,6 +221,7 @@ func patchUnix(url string) error {
 		return err
 	}
 
+	// TODO: this crashes program
 	if err := os.Rename(filepath.Join(".", "program"), selfPath); err != nil {
 		return err
 	}
