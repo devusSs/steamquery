@@ -15,7 +15,6 @@ build:
 clean:
 	@clear
 	@go mod tidy
-	@rm test_info.json
 	@rm -rf ./debug/
 	@rm -rf ./release/
 	@rm -rf ./dist/
