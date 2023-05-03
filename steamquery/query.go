@@ -35,18 +35,24 @@ func main() {
 	testRun := flag.Bool("t", false, "runs app in test mode, does not run actual query")
 	flag.Parse()
 
+	avgRTT, err := pingForNetworkTest()
+	if err != nil {
+		log.Printf("[%s] Error test pinging: %s\n", errSign, err.Error())
+		return
+	}
+
 	if *testRun {
 		log.Printf("[%s] App is running in test mode\n", warnSign)
 		fmt.Println()
 		printBuildInformation()
 		fmt.Println()
-		printTestInfo(*useBeta, *cfgPath, *gCloudPath)
+		printTestInfo(*useBeta, *cfgPath, *gCloudPath, avgRTT)
 
 		fmt.Println()
 
 		log.Printf("[%s] Writing info to file...\n", infSign)
 
-		if err := saveTestInfoToFile(*useBeta, *cfgPath, *gCloudPath); err != nil {
+		if err := saveTestInfoToFile(*useBeta, *cfgPath, *gCloudPath, fmt.Sprintf("%dms", avgRTT)); err != nil {
 			log.Printf("[%s] Error writing info to file: %s\n", errSign, err.Error())
 			return
 		}
@@ -89,6 +95,8 @@ func main() {
 	} else {
 		log.Printf("[%s] App is up to date, proceeding\n", infSign)
 	}
+
+	return
 
 	if err := createDefaultLogDirectory(); err != nil {
 		log.Printf("[%s] Creating logs directory failed: %s\n", errSign, err.Error())

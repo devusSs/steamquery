@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
 
 	"encoding/json"
+
+	probing "github.com/prometheus-community/pro-bing"
 )
 
 const (
@@ -29,6 +33,7 @@ type testInfo struct {
 		ProcessID       int    `json:"process_id"`
 		PathInfo        string `json:"path_info"`
 		HostInfo        string `json:"host_info"`
+		AvgRTT          string `json:"avg_rtt"`
 	} `json:"system_info"`
 	AppInfo struct {
 		LogsExist         bool   `json:"default_logs_dir_exists"`
@@ -46,12 +51,55 @@ func dirExists(dir string) bool {
 	return true
 }
 
-func printTestInfo(usingBeta bool, cfgPath, gCloudPath string) {
+func pingForNetworkTest() (int64, error) {
+	pinger, err := probing.NewPinger("steamcommunity.com")
+	if err != nil {
+		return 0, err
+	}
+
+	if buildOS == "windows" {
+		pinger.SetPrivileged(true)
+	}
+
+	if buildOS == "linux" {
+		pinger.SetPrivileged(true)
+		log.Printf("[%s] Please set following command:\n", warnSign)
+		exePath, err := os.Executable()
+		if err != nil {
+			return 0, err
+		}
+		log.Printf("[%s] %s\n", warnSign, fmt.Sprintf("setcap cap_net_raw=+ep %s", exePath))
+
+		log.Printf("Did you enter that command? (y/n): ")
+		inputReader := bufio.NewReader(os.Stdin)
+		userInput, _ := inputReader.ReadString('\n')
+
+		if userInput != "y" {
+			return 0, errors.New("cannot execute ping command without privileges")
+		}
+	}
+
+	pinger.Count = 3
+
+	log.Printf("[%s] Test pinging %s (%s)\n", infSign, pinger.Addr(), pinger.IPAddr())
+
+	err = pinger.Run()
+	if err != nil {
+		return 0, err
+	}
+
+	stats := pinger.Statistics()
+
+	return stats.AvgRtt.Milliseconds(), nil
+}
+
+func printTestInfo(usingBeta bool, cfgPath, gCloudPath string, avgRTT int64) {
 	log.Printf("[%s] CPU Cores (available): \t%d\n", infSign, runtime.NumCPU())
 	log.Printf("[%s] CGO calls: \t\t%d\n", infSign, runtime.NumCgoCall())
 	log.Printf("[%s] Goroutines: \t\t%d\n", infSign, runtime.NumGoroutine())
 	log.Printf("[%s] Pagesize: \t\t%d\n", infSign, os.Getpagesize())
 	log.Printf("[%s] Process ID: \t\t%d\n", infSign, os.Getpid())
+	log.Printf("[%s] AVG RTT to Steam: \t%d ms\n", infSign, avgRTT)
 
 	pPath, err := os.Getwd()
 	if err != nil {
@@ -79,7 +127,7 @@ func printTestInfo(usingBeta bool, cfgPath, gCloudPath string) {
 	log.Printf("[%s] Using gcloud config: \t%s\n", infSign, gCloudPath)
 }
 
-func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath string) error {
+func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath, avgRTT string) error {
 	f, err := os.Create(testInfoFileName)
 	if err != nil {
 		return err
@@ -111,6 +159,7 @@ func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath string) error {
 	info.Systeminfo.ProcessID = os.Getpid()
 	info.Systeminfo.PathInfo = pPath
 	info.Systeminfo.HostInfo = hostname
+	info.Systeminfo.AvgRTT = avgRTT
 
 	info.AppInfo.LogsExist = dirExists("./logs")
 	info.AppInfo.FilesExist = dirExists("./files")
