@@ -470,9 +470,6 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 		})
 	}
 
-	// Function calls itself again after 12 hours.
-	writeSuccess(fmt.Sprintf("Done, rerunning query again in %d hours...", cfg.UpdateInterval))
-
 	lastQueryData := lastQueryRunFormat{}
 	lastQueryData.LastRun = time.Now()
 
@@ -490,6 +487,11 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 		writeError(fmt.Sprintf("Error writing to last query log file: %s", err.Error()))
 		return
 	}
+
+	// Function calls itself again after 12 hours.
+	writeSuccess(fmt.Sprintf("Done, rerunning query again in %d hours...", cfg.UpdateInterval))
+
+	writeWarning("Please make sure to press CTRL+C to exit the app, DO NOT CLOSE THE WINDOW BEFORE")
 
 	time.AfterFunc(time.Duration(cfg.UpdateInterval)*time.Hour, func() {
 		runQuery(cfg, svc)
