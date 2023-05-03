@@ -41,6 +41,14 @@ func main() {
 		return
 	}
 
+	if avgRTT > 500 {
+		log.Printf("[%s] Your ping exceeds 500 ms (%d ms), requests may be delayed\n", warnSign, avgRTT)
+	} else {
+		log.Printf("[%s] Test ping succeeded\n", sucSign)
+	}
+
+	fmt.Println()
+
 	if *testRun {
 		log.Printf("[%s] App is running in test mode\n", warnSign)
 		fmt.Println()
@@ -95,8 +103,6 @@ func main() {
 	} else {
 		log.Printf("[%s] App is up to date, proceeding\n", infSign)
 	}
-
-	return
 
 	if err := createDefaultLogDirectory(); err != nil {
 		log.Printf("[%s] Creating logs directory failed: %s\n", errSign, err.Error())

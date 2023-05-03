@@ -81,7 +81,7 @@ func pingForNetworkTest() (int64, error) {
 
 	pinger.Count = 3
 
-	log.Printf("[%s] Test pinging %s (%s)\n", infSign, pinger.Addr(), pinger.IPAddr())
+	log.Printf("[%s] Test pinging %s\n", infSign, pinger.Addr())
 
 	err = pinger.Run()
 	if err != nil {
