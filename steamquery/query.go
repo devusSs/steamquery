@@ -35,32 +35,18 @@ func main() {
 	testRun := flag.Bool("t", false, "runs app in test mode, does not run actual query")
 	flag.Parse()
 
-	avgRTT, err := pingForNetworkTest()
-	if err != nil {
-		log.Printf("[%s] Error test pinging: %s\n", errSign, err.Error())
-		return
-	}
-
-	if avgRTT > 500 {
-		log.Printf("[%s] Your ping exceeds 500 ms (%d ms), requests may be delayed\n", warnSign, avgRTT)
-	} else {
-		log.Printf("[%s] Test ping succeeded\n", sucSign)
-	}
-
-	fmt.Println()
-
 	if *testRun {
 		log.Printf("[%s] App is running in test mode\n", warnSign)
 		fmt.Println()
 		printBuildInformation()
 		fmt.Println()
-		printTestInfo(*useBeta, *cfgPath, *gCloudPath, avgRTT)
+		printTestInfo(*useBeta, *cfgPath, *gCloudPath)
 
 		fmt.Println()
 
 		log.Printf("[%s] Writing info to file...\n", infSign)
 
-		if err := saveTestInfoToFile(*useBeta, *cfgPath, *gCloudPath, fmt.Sprintf("%dms", avgRTT)); err != nil {
+		if err := saveTestInfoToFile(*useBeta, *cfgPath, *gCloudPath); err != nil {
 			log.Printf("[%s] Error writing info to file: %s\n", errSign, err.Error())
 			return
 		}

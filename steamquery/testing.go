@@ -1,16 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"runtime"
 
 	"encoding/json"
-
-	probing "github.com/prometheus-community/pro-bing"
 )
 
 const (
@@ -33,7 +31,7 @@ type testInfo struct {
 		ProcessID       int    `json:"process_id"`
 		PathInfo        string `json:"path_info"`
 		HostInfo        string `json:"host_info"`
-		AvgRTT          string `json:"avg_rtt"`
+		ResolvedAddr    bool   `json:"resolved_addr"`
 	} `json:"system_info"`
 	AppInfo struct {
 		LogsExist         bool   `json:"default_logs_dir_exists"`
@@ -51,55 +49,25 @@ func dirExists(dir string) bool {
 	return true
 }
 
-func pingForNetworkTest() (int64, error) {
-	pinger, err := probing.NewPinger("steamcommunity.com")
+func testDNS() (bool, error) {
+	ips, err := net.LookupHost("steamcommunity.com")
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 
-	if buildOS == "windows" {
-		pinger.SetPrivileged(true)
+	if len(ips) == 0 {
+		return false, errors.New("no ip address found for test host")
 	}
 
-	if buildOS == "linux" {
-		pinger.SetPrivileged(true)
-		log.Printf("[%s] Please set following command:\n", warnSign)
-		exePath, err := os.Executable()
-		if err != nil {
-			return 0, err
-		}
-		log.Printf("[%s] %s\n", warnSign, fmt.Sprintf("setcap cap_net_raw=+ep %s", exePath))
-
-		log.Printf("Did you enter that command? (y/n): ")
-		inputReader := bufio.NewReader(os.Stdin)
-		userInput, _ := inputReader.ReadString('\n')
-
-		if userInput != "y" {
-			return 0, errors.New("cannot execute ping command without privileges")
-		}
-	}
-
-	pinger.Count = 3
-
-	log.Printf("[%s] Test pinging %s\n", infSign, pinger.Addr())
-
-	err = pinger.Run()
-	if err != nil {
-		return 0, err
-	}
-
-	stats := pinger.Statistics()
-
-	return stats.AvgRtt.Milliseconds(), nil
+	return true, nil
 }
 
-func printTestInfo(usingBeta bool, cfgPath, gCloudPath string, avgRTT int64) {
+func printTestInfo(usingBeta bool, cfgPath, gCloudPath string) {
 	log.Printf("[%s] CPU Cores (available): \t%d\n", infSign, runtime.NumCPU())
 	log.Printf("[%s] CGO calls: \t\t%d\n", infSign, runtime.NumCgoCall())
 	log.Printf("[%s] Goroutines: \t\t%d\n", infSign, runtime.NumGoroutine())
 	log.Printf("[%s] Pagesize: \t\t%d\n", infSign, os.Getpagesize())
 	log.Printf("[%s] Process ID: \t\t%d\n", infSign, os.Getpid())
-	log.Printf("[%s] AVG RTT to Steam: \t%d ms\n", infSign, avgRTT)
 
 	pPath, err := os.Getwd()
 	if err != nil {
@@ -115,6 +83,19 @@ func printTestInfo(usingBeta bool, cfgPath, gCloudPath string, avgRTT int64) {
 		log.Printf("[%s] Host info: \t\t%s\n", infSign, hostname)
 	}
 
+	dnsWorks, err := testDNS()
+	if err != nil {
+		log.Printf("[%s] Error resolving DNS test address: %s\n", errSign, err.Error())
+		return
+	}
+
+	if !dnsWorks {
+		log.Printf("[%s] Your DNS resolver does not seem to work, cannot proceed...\n", errSign)
+		return
+	}
+
+	log.Printf("[%s] DNS resolver test: \tsuccess\n", infSign)
+
 	fmt.Println()
 
 	log.Printf("[%s] Logs dir exists: \t%t\n", infSign, dirExists("./logs"))
@@ -127,7 +108,7 @@ func printTestInfo(usingBeta bool, cfgPath, gCloudPath string, avgRTT int64) {
 	log.Printf("[%s] Using gcloud config: \t%s\n", infSign, gCloudPath)
 }
 
-func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath, avgRTT string) error {
+func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath string) error {
 	f, err := os.Create(testInfoFileName)
 	if err != nil {
 		return err
@@ -140,6 +121,11 @@ func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath, avgRTT string) erro
 	}
 
 	hostname, err := os.Hostname()
+	if err != nil {
+		return err
+	}
+
+	dnsWorks, err := testDNS()
 	if err != nil {
 		return err
 	}
@@ -159,7 +145,7 @@ func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath, avgRTT string) erro
 	info.Systeminfo.ProcessID = os.Getpid()
 	info.Systeminfo.PathInfo = pPath
 	info.Systeminfo.HostInfo = hostname
-	info.Systeminfo.AvgRTT = avgRTT
+	info.Systeminfo.ResolvedAddr = dnsWorks
 
 	info.AppInfo.LogsExist = dirExists("./logs")
 	info.AppInfo.FilesExist = dirExists("./files")
