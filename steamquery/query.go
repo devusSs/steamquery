@@ -480,6 +480,7 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 
 	lastQueryData := lastQueryRunFormat{}
 	lastQueryData.LastRun = time.Now()
+	lastQueryData.FirstRun = firstQueryRun
 
 	if firstQueryRun.IsZero() {
 		lastQueryData.FirstRun = time.Now()
