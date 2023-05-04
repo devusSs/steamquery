@@ -87,21 +87,15 @@ func main() {
 	if newVersionAvai {
 		log.Printf("[%s] New version available (%s), updating and patching now...\n", warnSign, newVersion)
 
-		if buildOS == "windows" {
-			if err := patchWindows(updateURL); err != nil {
-				log.Printf("[%s] Patching app failed: %s\n", errSign, err.Error())
-				return
-			}
-		} else {
-			if err := patchUnix(updateURL); err != nil {
-				log.Printf("[%s] Patching app failed: %s\n", errSign, err.Error())
-				return
-			}
+		if err := doUpdate(updateURL); err != nil {
+			log.Printf("[%s] Updating binary failed: %s\n", errSign, err.Error())
+			return
 		}
 
-		log.Printf("[%s] Update succeeded (%s), proceeding...\n", sucSign, newVersion)
+		log.Printf("[%s] Update succeeded (%s), please restart the app\n", sucSign, newVersion)
+		return
 	} else {
-		log.Printf("[%s] App is up to date, proceeding\n", infSign)
+		log.Printf("[%s] App is up to date\n", infSign)
 	}
 
 	if err := createDefaultLogDirectory(); err != nil {

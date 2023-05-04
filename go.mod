@@ -5,12 +5,19 @@ go 1.20
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/prometheus-community/pro-bing v0.1.0
+	github.com/rhysd/go-github-selfupdate v1.2.3
 	google.golang.org/api v0.118.0
 )
 
 require (
+	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/google/go-github/v30 v30.1.0 // indirect
+	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/tcnksm/go-gitconfig v0.1.2 // indirect
+	github.com/ulikunitz/xz v0.5.9 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 )
 
