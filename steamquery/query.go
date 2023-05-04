@@ -500,8 +500,6 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 	// Function calls itself again after 12 hours.
 	writeSuccess(fmt.Sprintf("Done, rerunning query again in %d hours...", cfg.UpdateInterval))
 
-	writeWarning("Please make sure to press CTRL+C to exit the app, DO NOT CLOSE THE WINDOW BEFORE")
-
 	time.AfterFunc(time.Duration(cfg.UpdateInterval)*time.Hour, func() {
 		runQuery(cfg, svc)
 	})

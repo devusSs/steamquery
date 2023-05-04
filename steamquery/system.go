@@ -17,7 +17,7 @@ var (
 func listenForCTRLC() {
 	writeInfo("Press CTRL+C to cancel any time...")
 	done := make(chan os.Signal, 1)
-	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 	<-done
 	fmt.Println("")
 }
