@@ -34,7 +34,7 @@ func printBuildInformation() {
 	log.Printf("[%s] Go version: \t\t%s\n", infSign, goVersion)
 }
 
-// ChatGPT answer, adapted for own needs.
+// Queries the latest release from Github repo.
 func findLatestReleaseURL() (string, string, error) {
 	resp, err := http.Get(updateURL)
 	if err != nil {
@@ -94,6 +94,7 @@ func newerVersionAvailable(newVersion string) (bool, error) {
 	return !vNew.Equal(vOld), nil
 }
 
+// Perform the actual patch.
 func doUpdate(url string) error {
 	exe, err := os.Executable()
 	if err != nil {
