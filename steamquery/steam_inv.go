@@ -4,13 +4,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
 const (
 	appID     = 730
 	contextID = 2
+)
+
+// TODO: this list may need updates
+var (
+	ignoredItemNames = []string{
+		"Sticker",
+		"Base Grade Container",
+		"Coin",
+		"Trophy",
+		"Bonus Rank XP",
+		"Medal",
+		"Graffiti",
+		"Music Kit",
+		"Storage Unit",
+		"Badge",
+		"Pin",
+	}
 )
 
 func fetchCSGOInventory(userID64 string) (map[string]int, error) {
@@ -53,4 +72,46 @@ func fetchCSGOInventory(userID64 string) (map[string]int, error) {
 	}
 
 	return itemCountMap, nil
+}
+
+func compareInventoryAndConfig(cfg *config, inv map[string]int) []string {
+	missings := []string{}
+
+	for itemInv := range inv {
+		if ignoredNamesContainsItem(itemInv) {
+			continue
+		}
+
+		if isDefaultWeaponSkin(itemInv) {
+			continue
+		}
+
+		for _, itemCfgMap := range cfg.ItemList {
+			if _, ok := itemCfgMap[itemInv]; !ok {
+				missings = append(missings, itemInv)
+				break
+			}
+		}
+	}
+
+	for _, name := range missings {
+		log.Printf("[%s] MISSING: %s\n", infSign, name)
+	}
+
+	return missings
+}
+
+func ignoredNamesContainsItem(item string) bool {
+	for _, ignored := range ignoredItemNames {
+		if strings.Contains(strings.ToLower(item), strings.ToLower(ignored)) {
+			return true
+		}
+	}
+	return false
+}
+
+func isDefaultWeaponSkin(item string) bool {
+	// Vanilly / default skins do not contain "|" in name.
+	// Knifes contain "★" in front.
+	return !strings.Contains(item, "|") && !strings.Contains(item, "★")
 }

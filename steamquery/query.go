@@ -112,7 +112,7 @@ func main() {
 		return
 	}
 
-	// ! BETA FEATURE
+	// ! BETA FEATURES
 	// Query the status of CSGO via Steam API and query user's inventory for cases & capsules.
 	if *useBeta {
 		steamUp, err := isSteamCSGOAPIUp(cfg)
@@ -122,7 +122,7 @@ func main() {
 		}
 
 		if !steamUp {
-			writeWarning("Steam might be down or delayed")
+			writeWarning("Steam might be down or delayed, retry later")
 			return
 		}
 
@@ -132,14 +132,13 @@ func main() {
 			return
 		}
 
-		// Stickers contain "Sticker" in item.name
-		// Capsules contain "Base Grade ContaineR" in item.name
-		for name, am := range itemCountMap {
-			log.Printf("[%s] Name: %s ; Amount: %d\n", infSign, name, am)
+		missingItems := compareInventoryAndConfig(cfg, itemCountMap)
+
+		if len(missingItems) > 0 {
+			writeWarning(fmt.Sprintf("Your config only tracks %d item(s). Missing %d item(s) from inventory", len(cfg.ItemList), len(missingItems)))
 		}
 
-		writeWarning("If you are missing items in this list, they might be stored in storage units.")
-		writeWarning("Please remove them from the storage units, else this app cannot query them")
+		return
 	}
 
 	spreadsheetID = cfg.SpreadSheetID
