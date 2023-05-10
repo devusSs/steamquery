@@ -35,6 +35,7 @@ func main() {
 	gCloudPath := flag.String("g", "./files/gcloud.json", "sets the google cloud config path")
 	useBeta := flag.Bool("b", false, "opts into beta features")
 	testRun := flag.Bool("t", false, "runs app in test mode, does not run actual query")
+	compactMode := flag.Bool("co", false, "runs the app in compact mode (does not print every item updated)")
 	flag.Parse()
 
 	if *testRun {
@@ -193,7 +194,7 @@ func main() {
 		}
 	}
 
-	runQuery(cfg, svc)
+	runQuery(cfg, svc, *compactMode)
 
 	listenForCTRLC()
 
@@ -217,7 +218,7 @@ func main() {
 	log.Printf("[%s] Done cleaning up, exiting...\n", sucSign)
 }
 
-func runQuery(cfg *config, svc *spreadsheetService) {
+func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 	callClear()
 
 	// Fetch total value pre run.
@@ -235,7 +236,7 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 		writeInfo("Rerunning query in 30 mins...")
 
 		time.AfterFunc(30*time.Minute, func() {
-			runQuery(cfg, svc)
+			runQuery(cfg, svc, compactMode)
 		})
 
 		return
@@ -246,7 +247,7 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 		writeInfo(fmt.Sprintf("Rerunning query in %d mins...", cfg.SteamRetryInterval))
 
 		time.AfterFunc(time.Duration(cfg.SteamRetryInterval)*time.Minute, func() {
-			runQuery(cfg, svc)
+			runQuery(cfg, svc, compactMode)
 		})
 
 		return
@@ -399,7 +400,9 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 				return
 			}
 
-			writeSuccess(fmt.Sprintf("UPDATED ITEM: %s ; LOWEST PRICE: %s", itemName, lowestPrice))
+			if compactMode {
+				writeSuccess(fmt.Sprintf("UPDATED ITEM: %s ; LOWEST PRICE: %s", itemName, lowestPrice))
+			}
 
 			// We gotta prevent spamming Steam or else we get a 429.
 			if itemsCounted == 20 {
@@ -518,7 +521,7 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 	writeSuccess(fmt.Sprintf("Done, rerunning query again in %d hours...", cfg.UpdateInterval))
 
 	time.AfterFunc(time.Duration(cfg.UpdateInterval)*time.Hour, func() {
-		runQuery(cfg, svc)
+		runQuery(cfg, svc, compactMode)
 	})
 }
 
