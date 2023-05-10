@@ -226,6 +226,10 @@ func main() {
 func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 	callClear()
 
+	// Tell user we're running the query now incase they use compact mode.
+	writeInfo("Starting query process...")
+	writeWarning("In case you do not seem to get any progress make sure you are not using compact mode")
+
 	// Fetch total value pre run.
 	preRunTotalValue, err := svc.getTotalValueCell(cfg)
 	if err != nil {
@@ -405,7 +409,7 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 				return
 			}
 
-			if compactMode {
+			if !compactMode {
 				writeSuccess(fmt.Sprintf("UPDATED ITEM: %s ; LOWEST PRICE: %s", itemName, lowestPrice))
 			}
 
