@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -74,4 +75,24 @@ func truncateLastQueryRunFile() error {
 	}
 	_, err := lastQueryRunFile.Seek(0, 0)
 	return err
+}
+
+// Function to return own IP.
+func getOwnIPAddress() (string, error) {
+	resp, err := http.Get("https://ifconfig.me")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("got unwated ip response: %s", err.Error())
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(body), nil
 }

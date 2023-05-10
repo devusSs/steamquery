@@ -32,6 +32,7 @@ type testInfo struct {
 		PathInfo        string `json:"path_info"`
 		HostInfo        string `json:"host_info"`
 		ResolvedAddr    bool   `json:"resolved_addr"`
+		HostAddr        string `json:"host_addr"`
 	} `json:"system_info"`
 	AppInfo struct {
 		LogsExist         bool   `json:"default_logs_dir_exists"`
@@ -96,6 +97,14 @@ func printTestInfo(usingBeta bool, cfgPath, gCloudPath string) {
 
 	log.Printf("[%s] DNS resolver test: \tsuccess\n", infSign)
 
+	ipAddr, err := getOwnIPAddress()
+	if err != nil {
+		log.Printf("[%s] Could not query host's ip address: %s\n", errSign, err.Error())
+		return
+	}
+
+	log.Printf("[%s] Host IP address: \t%s\n", infSign, ipAddr)
+
 	fmt.Println()
 
 	log.Printf("[%s] Logs dir exists: \t%t\n", infSign, dirExists("./logs"))
@@ -130,6 +139,11 @@ func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath string) error {
 		return err
 	}
 
+	ipAddr, err := getOwnIPAddress()
+	if err != nil {
+		return err
+	}
+
 	var info testInfo
 
 	info.BuildInfo.BuildVersion = buildVersion
@@ -146,6 +160,7 @@ func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath string) error {
 	info.Systeminfo.PathInfo = pPath
 	info.Systeminfo.HostInfo = hostname
 	info.Systeminfo.ResolvedAddr = dnsWorks
+	info.Systeminfo.HostAddr = ipAddr
 
 	info.AppInfo.LogsExist = dirExists("./logs")
 	info.AppInfo.FilesExist = dirExists("./files")
