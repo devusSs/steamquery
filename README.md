@@ -10,6 +10,11 @@ This program may also not be safe for production use. It should be seen as a fun
 
 Please contact the owner (devusSs) at devuscs@gmail.com to resolve any issues (especially trademarks and copyright stuff).
 
+### Why does this program log my IP address and location (region/country) when running test mode?
+
+This function ensures we can exclude potential errors based on your location / IP address which might be bloocked on certain services like Google sheets or the Steam community. Please make sure to never share your information / the log file with anyone except the creator of this program for debugging / issue fixing purposes.
+You may however use the `-p` flag to use privacy mode which will prevent the app from querying your IP address and location based on your IP address.
+
 ## Setup
 
 Create a new raw [Google Sheet](https://docs.google.com/) and set it up like so (must not exactly match):

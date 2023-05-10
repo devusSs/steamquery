@@ -37,6 +37,7 @@ func main() {
 	testRun := flag.Bool("t", false, "runs app in test mode, does not run actual query")
 	compactMode := flag.Bool("co", false, "runs the app in compact mode (does not print every item updated)")
 	versionInfo := flag.Bool("v", false, "prints build information")
+	privacyMode := flag.Bool("p", false, "runs the app in privacy mode")
 	flag.Parse()
 
 	if *versionInfo {
@@ -49,13 +50,13 @@ func main() {
 		fmt.Println()
 		printBuildInformation()
 		fmt.Println()
-		printTestInfo(*useBeta, *cfgPath, *gCloudPath)
+		printTestInfo(*useBeta, *cfgPath, *gCloudPath, *privacyMode)
 
 		fmt.Println()
 
 		log.Printf("[%s] Writing info to file...\n", infSign)
 
-		if err := saveTestInfoToFile(*useBeta, *cfgPath, *gCloudPath); err != nil {
+		if err := saveTestInfoToFile(*useBeta, *cfgPath, *gCloudPath, *privacyMode); err != nil {
 			log.Printf("[%s] Error writing info to file: %s\n", errSign, err.Error())
 			return
 		}
