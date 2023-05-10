@@ -55,6 +55,14 @@ You can then run the app with either default flags or use the defined flags `-c`
 
 Errors will usually be self-explanatory. Any weird errors may require the use of [Google](https://google.com) or [creating an issue](https://github.com/devusSs/steamquery/issues) on Github.
 
+## Debugging the app
+
+In case you would like to run the app in debug mode or you would like to test certain elements you can use the `-t` flag when launching the app. This will generate a `test_info.json` file with most information needed to check potential errors when running the app.
+
+## Running beta features
+
+This app currently supports beta features which are built into the app. To use or test those beta features you will need to specify the `-b` flag when starting the app. Please take note that the app may not work as expected or might not even work at all when launched in beta mode.
+
 ## Further features (soonTM)
 
 - automatically query items from Steam inventories
