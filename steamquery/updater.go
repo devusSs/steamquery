@@ -35,6 +35,15 @@ func printBuildInformation() {
 	log.Printf("[%s] Go version: \t\t%s\n", infSign, goVersion)
 }
 
+// Function to print build information without log.
+func printBuildInformationRaw() {
+	fmt.Printf("Build version: \t\t%s\n", buildVersion)
+	fmt.Printf("Build date: \t\t%s\n", buildDate)
+	fmt.Printf("Build OS: \t\t%s\n", buildOS)
+	fmt.Printf("Build arch: \t\t%s\n", buildArch)
+	fmt.Printf("Go version: \t\t%s\n", goVersion)
+}
+
 // Queries the latest release from Github repo.
 func findLatestReleaseURL() (string, string, string, error) {
 	resp, err := http.Get(updateURL)

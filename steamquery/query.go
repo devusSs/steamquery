@@ -36,7 +36,13 @@ func main() {
 	useBeta := flag.Bool("b", false, "opts into beta features")
 	testRun := flag.Bool("t", false, "runs app in test mode, does not run actual query")
 	compactMode := flag.Bool("co", false, "runs the app in compact mode (does not print every item updated)")
+	versionInfo := flag.Bool("v", false, "prints build information")
 	flag.Parse()
+
+	if *versionInfo {
+		printBuildInformationRaw()
+		return
+	}
 
 	if *testRun {
 		log.Printf("[%s] App is running in test mode\n", warnSign)
