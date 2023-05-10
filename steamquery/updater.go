@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -35,24 +36,18 @@ func printBuildInformation() {
 }
 
 // Queries the latest release from Github repo.
-func findLatestReleaseURL() (string, string, error) {
+func findLatestReleaseURL() (string, string, string, error) {
 	resp, err := http.Get(updateURL)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	defer resp.Body.Close()
 
-	var release struct {
-		TagName string `json:"tag_name"`
-		Assets  []struct {
-			Name        string `json:"name"`
-			DownloadURL string `json:"browser_download_url"`
-		} `json:"assets"`
-	}
+	var release githubRelease
 
 	err = json.NewDecoder(resp.Body).Decode(&release)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	// Fix versions / architecture to match Github releases.
@@ -69,11 +64,17 @@ func findLatestReleaseURL() (string, string, error) {
 		releaseName := strings.ToLower(asset.Name)
 
 		if strings.Contains(releaseName, buildArch) && strings.Contains(releaseName, buildOS) {
-			return asset.DownloadURL, release.TagName, nil
+			// Format the changelog body accordingly.
+			changeSplit := strings.Split(strings.ReplaceAll(strings.TrimSpace(release.Body), "## Changelog", ""), "\n")
+			for i, line := range changeSplit {
+				changeSplit[i] = strings.ReplaceAll(fmt.Sprintf("\t\t\t%s", line), "*", "-")
+			}
+			changelog := strings.Join(changeSplit, "\n")
+			return asset.BrowserDownloadURL, release.TagName, changelog, nil
 		}
 	}
 
-	return "", "", errors.New("no matching release found")
+	return "", "", "", errors.New("no matching release found")
 }
 
 // Compare current version with latest version
@@ -109,7 +110,7 @@ func doUpdate(url string) error {
 }
 
 func periodicUpdateCheck() error {
-	_, versionCheck, err := findLatestReleaseURL()
+	_, versionCheck, _, err := findLatestReleaseURL()
 	if err != nil {
 		return err
 	}

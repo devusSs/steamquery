@@ -63,7 +63,7 @@ func main() {
 
 	log.Printf("[%s] Checking for updates...\n", infSign)
 
-	updateURL, newVersion, err := findLatestReleaseURL()
+	updateURL, newVersion, changelog, err := findLatestReleaseURL()
 	if err != nil {
 		log.Printf("[%s] Getting update url failed: %s\n", errSign, err.Error())
 		return
@@ -83,7 +83,10 @@ func main() {
 			return
 		}
 
+		log.Printf("[%s] Update changelog (%s): %s\n", infSign, newVersion, changelog)
+
 		log.Printf("[%s] Update succeeded (%s), please restart the app\n", sucSign, newVersion)
+
 		return
 	} else {
 		log.Printf("[%s] App is up to date\n", infSign)
