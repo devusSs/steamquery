@@ -23,16 +23,6 @@ clean:
 	@rm -rf ./testing/
 
 # DO NOT CHANGE.
-run: build
-	@clear
-	@rm -rf ./testing
-	@mkdir ./testing
-	@mkdir ./testing/files
-	@cp -R ./files ./testing
-	@cp ./release/steamquery_mac_arm64/steamquery ./testing
-	@cd ./testing && ./steamquery -co
-
-# DO NOT CHANGE.
 dev: build
 	@clear
 	@rm -rf ./testing
