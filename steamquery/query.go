@@ -56,6 +56,8 @@ func main() {
 
 		log.Printf("[%s] Successfully saved info to file \"%s\"\n", sucSign, testInfoFileName)
 
+		log.Printf("[%s] That file might contain sensitive information. Please only share it with trusted persons\n", warnSign)
+
 		return
 	}
 
