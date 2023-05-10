@@ -511,6 +511,9 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 		return
 	}
 
+	writeWarning("In case you want to exit the program, please make sure to press CRTL+C first.")
+	writeWarning("DO NOT JUST CLOSE YOUR TERMINAL WINDOW!")
+
 	// Function calls itself again after 12 hours.
 	writeSuccess(fmt.Sprintf("Done, rerunning query again in %d hours...", cfg.UpdateInterval))
 
