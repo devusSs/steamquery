@@ -24,15 +24,16 @@ type testInfo struct {
 		GoVersion    string `json:"go_version"`
 	} `json:"build_info"`
 	Systeminfo struct {
-		CPUCount        int    `json:"cpu_count"`
-		CGOCalls        int64  `json:"cgo_calls"`
-		GoRoutinesCount int    `json:"goroutines_count"`
-		Pagesize        int    `json:"pagesize"`
-		ProcessID       int    `json:"process_id"`
-		PathInfo        string `json:"path_info"`
-		HostInfo        string `json:"host_info"`
-		ResolvedAddr    bool   `json:"resolved_addr"`
-		HostAddr        string `json:"host_addr"`
+		CPUCount         int    `json:"cpu_count"`
+		CGOCalls         int64  `json:"cgo_calls"`
+		GoRoutinesCount  int    `json:"goroutines_count"`
+		Pagesize         int    `json:"pagesize"`
+		ProcessID        int    `json:"process_id"`
+		PathInfo         string `json:"path_info"`
+		HostInfo         string `json:"host_info"`
+		ResolvedAddr     bool   `json:"resolved_addr"`
+		HostAddr         string `json:"host_addr"`
+		HostAddrLocation string `json:"host_addr_location"`
 	} `json:"system_info"`
 	AppInfo struct {
 		LogsExist         bool   `json:"default_logs_dir_exists"`
@@ -63,7 +64,7 @@ func testDNS() (bool, error) {
 	return true, nil
 }
 
-func printTestInfo(usingBeta bool, cfgPath, gCloudPath string) {
+func printTestInfo(usingBeta bool, cfgPath, gCloudPath string, privacyMode bool) {
 	log.Printf("[%s] CPU Cores (available): \t%d\n", infSign, runtime.NumCPU())
 	log.Printf("[%s] CGO calls: \t\t%d\n", infSign, runtime.NumCgoCall())
 	log.Printf("[%s] Goroutines: \t\t%d\n", infSign, runtime.NumGoroutine())
@@ -97,13 +98,23 @@ func printTestInfo(usingBeta bool, cfgPath, gCloudPath string) {
 
 	log.Printf("[%s] DNS resolver test: \tsuccess\n", infSign)
 
-	ipAddr, err := getOwnIPAddress()
-	if err != nil {
-		log.Printf("[%s] Could not query host's ip address: %s\n", errSign, err.Error())
-		return
-	}
+	if !privacyMode {
+		ipAddr, err := getOwnIPAddress()
+		if err != nil {
+			log.Printf("[%s] Could not query host's ip address: %s\n", errSign, err.Error())
+			return
+		}
 
-	log.Printf("[%s] Host IP address: \t%s\n", infSign, ipAddr)
+		log.Printf("[%s] Host IP address: \t%s\n", infSign, ipAddr)
+
+		location, err := getIPLocation(ipAddr)
+		if err != nil {
+			log.Printf("[%s] Could not query host ip's location: %s\n", errSign, err.Error())
+			return
+		}
+
+		log.Printf("[%s] Host IP location: \t%s\n", infSign, location)
+	}
 
 	fmt.Println()
 
@@ -117,7 +128,7 @@ func printTestInfo(usingBeta bool, cfgPath, gCloudPath string) {
 	log.Printf("[%s] Using gcloud config: \t%s\n", infSign, gCloudPath)
 }
 
-func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath string) error {
+func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath string, privacyMode bool) error {
 	f, err := os.Create(testInfoFileName)
 	if err != nil {
 		return err
@@ -139,9 +150,19 @@ func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath string) error {
 		return err
 	}
 
-	ipAddr, err := getOwnIPAddress()
-	if err != nil {
-		return err
+	ipAddr := "privacy_mode"
+	location := "privacy_mode"
+
+	if !privacyMode {
+		ipAddr, err = getOwnIPAddress()
+		if err != nil {
+			return err
+		}
+
+		location, err = getIPLocation(ipAddr)
+		if err != nil {
+			return err
+		}
 	}
 
 	var info testInfo
@@ -160,7 +181,11 @@ func saveTestInfoToFile(usingBeta bool, cfgPath, gCloudPath string) error {
 	info.Systeminfo.PathInfo = pPath
 	info.Systeminfo.HostInfo = hostname
 	info.Systeminfo.ResolvedAddr = dnsWorks
-	info.Systeminfo.HostAddr = ipAddr
+
+	if !privacyMode {
+		info.Systeminfo.HostAddr = ipAddr
+		info.Systeminfo.HostAddrLocation = location
+	}
 
 	info.AppInfo.LogsExist = dirExists("./logs")
 	info.AppInfo.FilesExist = dirExists("./files")

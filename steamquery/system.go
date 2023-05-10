@@ -10,6 +10,10 @@ import (
 	"syscall"
 )
 
+const (
+	ipLocationURL = "http://ip-api.com/json/"
+)
+
 var (
 	lastQueryRunFile *os.File
 )
@@ -86,7 +90,7 @@ func getOwnIPAddress() (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("got unwated ip response: %s", err.Error())
+		return "", fmt.Errorf("got unwated ip response: %s", resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -95,4 +99,30 @@ func getOwnIPAddress() (string, error) {
 	}
 
 	return string(body), nil
+}
+
+// Function to get country from IP address.
+func getIPLocation(ip string) (string, error) {
+	resp, err := http.Get(fmt.Sprintf("%s%s", ipLocationURL, ip))
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("got unwated ip response: %s", resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var ipLoc ipLocationInfo
+
+	if err := json.Unmarshal(body, &ipLoc); err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s.%s", ipLoc.RegionName, ipLoc.Country), nil
 }
