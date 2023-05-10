@@ -8,15 +8,16 @@ import (
 )
 
 type config struct {
-	ItemList        []map[string]string `json:"item_list"`
-	LastUpdatedCell string              `json:"last_updated_cell"`
-	ErrorCell       string              `json:"error_cell"`
-	SpreadSheetID   string              `json:"spreadsheet_id"`
-	UpdateInterval  int                 `json:"update_interval"`
-	SteamAPIKey     string              `json:"steam_api_key"`
-	SteamUserID64   string              `json:"steam_id_64"`
-	TotalValueCell  string              `json:"total_value_cell"`
-	DiffCell        string              `json:"value_difference_cell"`
+	ItemList           []map[string]string `json:"item_list"`
+	LastUpdatedCell    string              `json:"last_updated_cell"`
+	ErrorCell          string              `json:"error_cell"`
+	SpreadSheetID      string              `json:"spreadsheet_id"`
+	UpdateInterval     int                 `json:"update_interval"`
+	SteamAPIKey        string              `json:"steam_api_key"`
+	SteamUserID64      string              `json:"steam_id_64"`
+	SteamRetryInterval int                 `json:"steam_retry_interval"`
+	TotalValueCell     string              `json:"total_value_cell"`
+	DiffCell           string              `json:"value_difference_cell"`
 }
 
 func loadConfig(fileName string) (*config, error) {
@@ -65,6 +66,10 @@ func (c *config) checkConfig() error {
 
 	if c.SteamUserID64 == "" {
 		return errors.New("missing steam id 64 in config")
+	}
+
+	if c.SteamRetryInterval == 0 {
+		return errors.New("missing steam retry interval in config")
 	}
 
 	if c.TotalValueCell == "" {

@@ -228,9 +228,9 @@ func runQuery(cfg *config, svc *spreadsheetService) {
 
 	if !steamUp {
 		writeWarning("Steam might be down or delayed")
-		writeInfo("Rerunning query in 30 mins...")
+		writeInfo(fmt.Sprintf("Rerunning query in %d mins...", cfg.SteamRetryInterval))
 
-		time.AfterFunc(30*time.Minute, func() {
+		time.AfterFunc(time.Duration(cfg.SteamRetryInterval)*time.Minute, func() {
 			runQuery(cfg, svc)
 		})
 

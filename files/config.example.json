@@ -10,6 +10,7 @@
   "update_interval": 2,
   "steam_api_key": "steam_api_key",
   "steam_id_64": "id64steam => get it from sites like https://steamid.uk",
+  "steam_retry_interval": 10,
   "total_value_cell": "table_cell_which_calculates_total_value_using_sheets_functions",
   "value_difference_cell": "table_cell_which_shows_difference_in_total_value_using_this_program"
 }
