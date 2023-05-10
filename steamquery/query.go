@@ -26,6 +26,8 @@ var (
 
 	firstQueryRun time.Time
 	lastQueryRun  time.Time
+
+	updateCheckTimer *time.Timer
 )
 
 func main() {
@@ -83,6 +85,14 @@ func main() {
 	} else {
 		log.Printf("[%s] App is up to date\n", infSign)
 	}
+
+	updateCheckTimer = time.AfterFunc(24*time.Hour, func() {
+		if err := periodicUpdateCheck(); err != nil {
+			log.Printf("[%s] Periodic update check failed: %s\n", errSign, err.Error())
+		}
+	})
+
+	log.Printf("[%s] Checking for updates every 24 hours\n", infSign)
 
 	if err := createDefaultLogDirectory(); err != nil {
 		log.Printf("[%s] Creating logs directory failed: %s\n", errSign, err.Error())
@@ -188,6 +198,11 @@ func main() {
 	listenForCTRLC()
 
 	writeInfo("Cleaning up, please wait...")
+
+	// Close the update check timer channel.
+	if !updateCheckTimer.Stop() {
+		<-updateCheckTimer.C
+	}
 
 	if err := logFile.Close(); err != nil {
 		log.Printf("[%s] Error closing log file: %s\n", errSign, err.Error())

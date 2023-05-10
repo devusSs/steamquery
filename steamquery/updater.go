@@ -107,3 +107,21 @@ func doUpdate(url string) error {
 
 	return nil
 }
+
+func periodicUpdateCheck() error {
+	_, versionCheck, err := findLatestReleaseURL()
+	if err != nil {
+		return err
+	}
+
+	newVersionAvailable, err := newerVersionAvailable(versionCheck)
+	if err != nil {
+		return err
+	}
+
+	if newVersionAvailable {
+		log.Printf("[%s] New version available (%s). Please restart your app soon\n", warnSign, versionCheck)
+	}
+
+	return nil
+}
