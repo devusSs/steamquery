@@ -12,7 +12,7 @@ Please contact the owner (devusSs) at devuscs@gmail.com to resolve any issues (e
 
 ### Why does this program log my IP address and location (region/country) when running test mode?
 
-This function ensures we can exclude potential errors based on your location / IP address which might be bloocked on certain services like Google sheets or the Steam community. Please make sure to never share your information / the log file with anyone except the creator of this program for debugging / issue fixing purposes.
+This function ensures we can exclude potential errors based on your location / IP address which might be blocked on certain services like Google sheets or the Steam community. Please make sure to never share your information / the log file with anyone except the creator of this program for debugging / issue fixing purposes.
 You may however use the `-p` flag to use privacy mode which will prevent the app from querying your IP address and location based on your IP address.
 
 ## Setup
@@ -50,8 +50,6 @@ Then create a `config.json` file in a directory of your choice. Using the [files
 <br/>
 Use the [example config file](files/config.example.json) to create your own `config.json` file:
 
-<br/>
-
 ## Building and running the app
 
 Either download an already compiled program from the [releases](https://github.com/devusSs/steamquery/releases) section or clone the repository and compile the program yourself. You will need the [Go(lang)](https://go.dev) binaries for that. Use the `Makefile` for more information.
@@ -59,6 +57,8 @@ Either download an already compiled program from the [releases](https://github.c
 You can then run the app with either default flags or use the defined flags `-c` and `-g` to set your config file path and your gcloud.json file path respectively.
 
 Errors will usually be self-explanatory. Any weird errors may require the use of [Google](https://google.com) or [creating an issue](https://github.com/devusSs/steamquery/issues) on Github.
+
+You may also run the app via Docker. Clone the repository and make sure to set `export STEAMQUERY_VERSION=vX.X.X` via your terminal with the version that matches the [latest release](https://github.com/devusSs/steamquery/releases/latest) to prevent any issues caused by automatic updating. You can then run `make docker` in the project's directory.
 
 ## Debugging the app
 
