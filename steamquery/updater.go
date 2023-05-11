@@ -131,6 +131,9 @@ func periodicUpdateCheck() error {
 
 	if newVersionAvailable {
 		log.Printf("[%s] New version available (%s). Please restart your app soon\n", warnSign, versionCheck)
+		newVersionAvailablePeriodic = true
+	} else {
+		newVersionAvailablePeriodic = false
 	}
 
 	return nil

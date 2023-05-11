@@ -30,6 +30,8 @@ var (
 	lastQueryRun  time.Time
 
 	updateCheckTimer *time.Timer
+
+	newVersionAvailablePeriodic bool
 )
 
 func main() {
@@ -530,6 +532,26 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 				return
 			}
 		})
+	}
+
+	// Check if a new version is available and add this to error cell.
+	if newVersionAvailablePeriodic {
+		var errorInterface []interface{}
+
+		errorInterface = append(errorInterface, "New version available.")
+
+		if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
+			writeError(fmt.Sprintf("Error updating error cell: %s", err.Error()))
+			writeInfo("Rerunning Google sheets entry in 1 minute...")
+
+			time.AfterFunc(1*time.Minute, func() {
+				if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
+					writeError(fmt.Sprintf("Error updating error cell on 2nd try: %s", err.Error()))
+					writeWarning("There might be something wrong with Google or your connection, exiting...")
+					return
+				}
+			})
+		}
 	}
 
 	lastQueryData := lastQueryRunFormat{}
