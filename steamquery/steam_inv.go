@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -74,10 +73,10 @@ func fetchCSGOInventory(userID64 string) (map[string]int, error) {
 	return itemCountMap, nil
 }
 
-func compareInventoryAndConfig(cfg *config, inv map[string]int) []string {
-	missings := []string{}
+func compareInventoryAndConfig(cfg *config, inv map[string]int) map[string]int {
+	missings := make(map[string]int)
 
-	for itemInv := range inv {
+	for itemInv, itemAmount := range inv {
 		if ignoredNamesContainsItem(itemInv) {
 			continue
 		}
@@ -88,14 +87,10 @@ func compareInventoryAndConfig(cfg *config, inv map[string]int) []string {
 
 		for _, itemCfgMap := range cfg.ItemList {
 			if _, ok := itemCfgMap[itemInv]; !ok {
-				missings = append(missings, itemInv)
+				missings[itemInv] = itemAmount
 				break
 			}
 		}
-	}
-
-	for _, name := range missings {
-		log.Printf("[%s] MISSING: %s\n", infSign, name)
 	}
 
 	return missings

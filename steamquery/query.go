@@ -15,6 +15,8 @@ import (
 	"time"
 
 	_ "time/tzdata"
+
+	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 const (
@@ -136,8 +138,10 @@ func main() {
 	}
 
 	// ! BETA FEATURES
-	// Query the status of CSGO via Steam API and query user's inventory for cases & capsules.
 	if *useBeta {
+		// TODO: check last query run because of potential spamming of Steam
+		writeInfo("Checking potential config itemlist and Steam inventory items mismatch...")
+
 		steamUp, err := isSteamCSGOAPIUp(cfg)
 		if err != nil {
 			writeError(fmt.Sprintf("Querying Steam API failed: %s", err.Error()))
@@ -158,7 +162,24 @@ func main() {
 		missingItems := compareInventoryAndConfig(cfg, itemCountMap)
 
 		if len(missingItems) > 0 {
-			writeWarning(fmt.Sprintf("Your config only tracks %d item(s). Missing %d item(s) from inventory", len(cfg.ItemList), len(missingItems)))
+			writeWarning(fmt.Sprintf("Config items: %d ; Missing items from Steam inventory:", len(cfg.ItemList)))
+
+			fmt.Println()
+
+			t := table.NewWriter()
+			t.SetOutputMirror(os.Stdout)
+			t.AppendHeader(table.Row{"Missing item name", "Missing item amount"})
+			t.AppendSeparator()
+
+			var totalItemsMissing int
+			for itemName, itemAmount := range missingItems {
+				t.AppendRow(table.Row{itemName, itemAmount})
+				totalItemsMissing = totalItemsMissing + itemAmount
+			}
+
+			t.AppendFooter(table.Row{"Total", totalItemsMissing})
+
+			t.Render()
 		}
 
 		return
