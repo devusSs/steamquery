@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 )
@@ -125,4 +127,16 @@ func getIPLocation(ip string) (string, error) {
 	}
 
 	return fmt.Sprintf("%s.%s", ipLoc.RegionName, ipLoc.Country), nil
+}
+
+// Functions which restarts the app with same flags.
+func restartApp() {
+	cmd := exec.Command(os.Args[0], os.Args[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+	if err := cmd.Start(); err != nil {
+		log.Fatalf("[%s] Failed to restart: %s\n", errSign, err.Error())
+	}
+	os.Exit(0)
 }

@@ -98,7 +98,8 @@ func main() {
 
 		log.Printf("[%s] Update succeeded (%s), please restart the app\n", sucSign, newVersion)
 
-		return
+		// This will exit the current program, no need to return here.
+		restartApp()
 	} else {
 		log.Printf("[%s] App is up to date\n", infSign)
 	}
