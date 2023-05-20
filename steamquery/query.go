@@ -368,7 +368,7 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 			defer res.Body.Close()
 
 			if res.StatusCode != 200 {
-				writeError(fmt.Sprintf("Error on response: %s", err.Error()))
+				writeError(fmt.Sprintf("Got unwanted response: %s", res.Status))
 
 				var errorInterface []interface{}
 
