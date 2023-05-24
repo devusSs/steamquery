@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/rhysd/go-github-selfupdate v1.2.3
-	google.golang.org/api v0.122.0
+	google.golang.org/api v0.124.0
 )
 
 require (
@@ -28,7 +28,7 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/s2a-go v0.1.3 // indirect
+	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/googleapis/gax-go/v2 v2.8.0 // indirect
