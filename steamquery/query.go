@@ -342,6 +342,13 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
+
+					writeInfo("Rerunning query in 30 mins...")
+
+					time.AfterFunc(30*time.Minute, func() {
+						runQuery(cfg, svc, compactMode)
+					})
+
 					return
 				}
 
@@ -360,6 +367,13 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
+
+					writeInfo("Rerunning query in 30 mins...")
+
+					time.AfterFunc(30*time.Minute, func() {
+						runQuery(cfg, svc, compactMode)
+					})
+
 					return
 				}
 
@@ -376,6 +390,13 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
+
+					writeInfo("Rerunning query in 30 mins...")
+
+					time.AfterFunc(30*time.Minute, func() {
+						runQuery(cfg, svc, compactMode)
+					})
+
 					return
 				}
 
@@ -392,6 +413,13 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
+
+					writeInfo("Rerunning query in 30 mins...")
+
+					time.AfterFunc(30*time.Minute, func() {
+						runQuery(cfg, svc, compactMode)
+					})
+
 					return
 				}
 
@@ -409,6 +437,13 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
+
+					writeInfo("Rerunning query in 30 mins...")
+
+					time.AfterFunc(30*time.Minute, func() {
+						runQuery(cfg, svc, compactMode)
+					})
+
 					return
 				}
 
@@ -428,12 +463,25 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 			if err := updateEntryOnSheet(tableCell, priceInterface, svc); err != nil {
 				writeError(fmt.Sprintf("Error on updating value on google sheet: %s", err.Error()))
 
+				writeInfo("Rerunning query in 30 mins...")
+
+				time.AfterFunc(30*time.Minute, func() {
+					runQuery(cfg, svc, compactMode)
+				})
+
 				var errorInterface []interface{}
 
 				errorInterface = append(errorInterface, err.Error())
 
 				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 					writeError(fmt.Sprintf("Error on updating error cell value: %s", err.Error()))
+
+					writeInfo("Rerunning query in 30 mins...")
+
+					time.AfterFunc(30*time.Minute, func() {
+						runQuery(cfg, svc, compactMode)
+					})
+
 					return
 				}
 
@@ -474,6 +522,13 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 	// Update total value difference on sheet
 	if err := updateEntryOnSheet(cfg.DiffCell, totalValueInterface, svc); err != nil {
 		writeError(fmt.Sprintf("Error on updating total value difference cell value: %s", err.Error()))
+
+		writeInfo("Rerunning query in 30 mins...")
+
+		time.AfterFunc(30*time.Minute, func() {
+			runQuery(cfg, svc, compactMode)
+		})
+
 		return
 	}
 
@@ -483,14 +538,21 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 
 	lastUpdateInterface = append(lastUpdateInterface, time.Now().Format(time.DateTime))
 
-	if err := svc.writeSingleEntryToTable(cfg.LastUpdatedCell, lastUpdateInterface); err != nil {
+	if err := updateEntryOnSheet(cfg.LastUpdatedCell, lastUpdateInterface, svc); err != nil {
 		writeError(fmt.Sprintf("Error updating last updated cell: %s", err.Error()))
 		writeInfo("Rerunning Google sheets entry in 1 minute...")
 
 		time.AfterFunc(1*time.Minute, func() {
-			if err := svc.writeSingleEntryToTable(cfg.LastUpdatedCell, lastUpdateInterface); err != nil {
+			if err := updateEntryOnSheet(cfg.LastUpdatedCell, lastUpdateInterface, svc); err != nil {
 				writeError(fmt.Sprintf("Error updating last updated cell on 2nd try: %s", err.Error()))
-				writeWarning("There might be something wrong with Google or your connection, exiting...")
+				writeWarning("There might be something wrong with Google or your connection")
+
+				writeInfo("Rerunning query in 30 mins...")
+
+				time.AfterFunc(30*time.Minute, func() {
+					runQuery(cfg, svc, compactMode)
+				})
+
 				return
 			}
 		})
@@ -503,14 +565,21 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 
 		errorInterface = append(errorInterface, "Not all items have been updated.")
 
-		if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
+		if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 			writeError(fmt.Sprintf("Error updating error cell: %s", err.Error()))
 			writeInfo("Rerunning Google sheets entry in 1 minute...")
 
 			time.AfterFunc(1*time.Minute, func() {
-				if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
+				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 					writeError(fmt.Sprintf("Error updating error cell on 2nd try: %s", err.Error()))
-					writeWarning("There might be something wrong with Google or your connection, exiting...")
+					writeWarning("There might be something wrong with Google or your connection")
+
+					writeInfo("Rerunning query in 30 mins...")
+
+					time.AfterFunc(30*time.Minute, func() {
+						runQuery(cfg, svc, compactMode)
+					})
+
 					return
 				}
 			})
@@ -522,14 +591,21 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 
 	errorInterface = append(errorInterface, "No error(s) occured.")
 
-	if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
+	if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 		writeError(fmt.Sprintf("Error updating error cell: %s", err.Error()))
 		writeInfo("Rerunning Google sheets entry in 1 minute...")
 
 		time.AfterFunc(1*time.Minute, func() {
-			if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
+			if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 				writeError(fmt.Sprintf("Error updating error cell on 2nd try: %s", err.Error()))
-				writeWarning("There might be something wrong with Google or your connection, exiting...")
+				writeWarning("There might be something wrong with Google or your connection")
+
+				writeInfo("Rerunning query in 30 mins...")
+
+				time.AfterFunc(30*time.Minute, func() {
+					runQuery(cfg, svc, compactMode)
+				})
+
 				return
 			}
 		})
@@ -541,14 +617,21 @@ func runQuery(cfg *config, svc *spreadsheetService, compactMode bool) {
 
 		errorInterface = append(errorInterface, "New version available.")
 
-		if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
+		if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 			writeError(fmt.Sprintf("Error updating error cell: %s", err.Error()))
 			writeInfo("Rerunning Google sheets entry in 1 minute...")
 
 			time.AfterFunc(1*time.Minute, func() {
-				if err := svc.writeSingleEntryToTable(cfg.ErrorCell, errorInterface); err != nil {
+				if err := updateEntryOnSheet(cfg.ErrorCell, errorInterface, svc); err != nil {
 					writeError(fmt.Sprintf("Error updating error cell on 2nd try: %s", err.Error()))
-					writeWarning("There might be something wrong with Google or your connection, exiting...")
+					writeWarning("There might be something wrong with Google or your connection")
+
+					writeInfo("Rerunning query in 30 mins...")
+
+					time.AfterFunc(30*time.Minute, func() {
+						runQuery(cfg, svc, compactMode)
+					})
+
 					return
 				}
 			})
