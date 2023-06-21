@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/rhysd/go-github-selfupdate v1.2.3
-	google.golang.org/api v0.127.0
+	google.golang.org/api v0.128.0
 )
 
 require (
