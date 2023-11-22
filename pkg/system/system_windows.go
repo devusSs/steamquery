@@ -29,5 +29,8 @@ func GetArch(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("getting arch: %w", err)
 	}
 	arch := strings.Replace(strings.TrimSpace(string(output)), "OSArchitecture", "", 1)
+	if strings.Contains(arch, "64") {
+		return "x86_64", nil
+	}
 	return arch, nil
 }
