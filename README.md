@@ -21,7 +21,7 @@ The tool makes a request to the Steam API to check whether the session logons an
 
 ### Usage
 
-Download an already compiled [release](https://github.com/devusSs/steamquery/latest) and store it somewhere on your system.
+Download an already compiled [release](https://github.com/devusSs/steamquery/releases/latest) and store it somewhere on your system.
 
 You will then need to create a [Google service account](https://cloud.google.com/iam/docs/service-account-overview) for the [Google Sheets API](https://developers.google.com/sheets/api/guides/concepts) and store in a directory you would like to use.
 
