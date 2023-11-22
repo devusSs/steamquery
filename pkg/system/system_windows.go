@@ -28,6 +28,6 @@ func GetArch(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("getting arch: %w", err)
 	}
-	arch := strings.TrimSpace(string(output))
+	arch := strings.Replace(strings.TrimSpace(string(output)), "OSArchitecture", "", 1)
 	return arch, nil
 }
