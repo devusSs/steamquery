@@ -13,7 +13,7 @@ It originally was called [steamquery-v2](https://github.com/devusSs/steamquery-v
 - quick runtimes (on a decent connection around 15 secs for an entire run)
 - does not only track your inventory but also custom items if you'd like to (see below for more information)
 - no installation or build needed, just download an already compiled release
-- unlike some websites you do not need to login via Steam or share any sensitive information (except your API key)
+- unlike some websites you do not need to login via Steam
 
 ### Why does the tool need my Steam API key?
 
@@ -21,7 +21,7 @@ The tool makes a request to the Steam API to check whether the session logons an
 
 ### Usage
 
-Download an already compiled [release](https://github.com/steamquery/releases/latest) and store it somewhere on your system.
+Download an already compiled [release](https://github.com/devusSs/steamquery/latest) and store it somewhere on your system.
 
 You will then need to create a [Google service account](https://cloud.google.com/iam/docs/service-account-overview) for the [Google Sheets API](https://developers.google.com/sheets/api/guides/concepts) and store in a directory you would like to use.
 
@@ -71,11 +71,11 @@ More (potential) filters may be added soon.
 
 In case you encounter any issues you can try running the program with either `--console` flag to print the log output to your terminal or go even further and specify the `--debug` flag which will add more verbose logs and also log to terminal.
 
-Please use Google first to try solve your problem. Else [open an issue](https://github.com/steamquery/issues).
+Please use Google first to try solve your problem. Else [open an issue](https://github.com/devusSs/steamquery/issues).
 
 ### Building the app yourself
 
-See the [docs directory](./docs/build.md) for further information. Building yourself is not recommended since you need a few tools. If you do however want to build the app yourself please read the documentation.
+Check the [build documentation in the docs directory](./docs/build.md) for further information. Building yourself is not recommended since you need a few tools. If you do however want to build the app yourself please read the documentation.
 
 ## Disclaimer
 
@@ -84,6 +84,10 @@ This program is in no way affiliated with [Valve](https://www.valvesoftware.com/
 Please refrain from using this program for potentailly disallowed actions according to the [Steam TOS](https://store.steampowered.com/eula/471710_eula_0) or if you do not know what it does or how to use it.
 
 Any copyright goes to their respective owners. Please also check out the [go mod file](./go.mod) and the [go sum file](./go.sum) files to check out the awesome packages I used to build this project.
+
+## Further features and updates
+
+Check the [roadmap in the docs directory](./docs/roadmap.md) for more information.
 
 ## License
 
