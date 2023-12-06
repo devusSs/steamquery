@@ -132,12 +132,6 @@ func findLatestReleaseURL() (string, string, string, error) {
 		return "", "", "", err
 	}
 	buildArch := runtime.GOARCH
-	if buildArch == "amd64" {
-		buildArch = "x86_64"
-	}
-	if buildArch == "386" {
-		buildArch = "i386"
-	}
 	buildOS := runtime.GOOS
 	for _, asset := range release.Assets {
 		releaseName := strings.ToLower(asset.Name)
