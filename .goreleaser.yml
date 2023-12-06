@@ -8,6 +8,9 @@ builds:
     flags:
       - -trimpath
 
+    env:
+      - CGO_ENABLED=0
+
     ldflags:
       - -s -w -X main.buildVersion={{.Version}} -X main.buildDate={{.Date}} -X main.buildGitCommit={{.Commit}}
 
